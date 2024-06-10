@@ -1,6 +1,9 @@
 import time
 
-print(int(4.5))
+color = None
+c = color
+color = True
+print(c, color)
 
 # start = time.time()
 

@@ -113,6 +113,7 @@ def board_to_FEN(board):
     return fen_position + " w KQkq - 0 1"
 
 init_pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+# init_pos = 'R7/8/8/4R3/8/8/8/8 w KQkq - 0 1'
 
 board = FEN_to_board(init_pos)
 # board = [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -124,7 +125,8 @@ board = FEN_to_board(init_pos)
 #          ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
 #          ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
 
-moves = chessPY.get_moves(init_pos)
+moves = chessPY.get_moves(init_pos, board)
+pos = init_pos
 selected = False
 
 window_size = (original_width, original_height)
@@ -142,9 +144,8 @@ while running:
 
                 if selected:
                     if new_selected in moves[selected[1]][selected[0]]:
-                        chessPY.make_move(selected, new_selected, board)
-                        pos = board_to_FEN(board)
-                        moves = chessPY.get_moves(pos)
+                        pos, board = chessPY.make_move(pos, selected, new_selected, board)
+                        moves = chessPY.get_moves(pos, board)
                         selected = False
 
                     elif board[new_selected[1]][new_selected[0]] == '0': selected = False
