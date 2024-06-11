@@ -1,9 +1,9 @@
 import time
 
 color = None
-c = color
-color = True
-print(c, color)
+c = 'KQkq'
+c = c.replace('k', '')
+print(c)
 
 # start = time.time()
 
