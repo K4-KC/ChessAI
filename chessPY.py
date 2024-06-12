@@ -62,7 +62,7 @@ def get_territory(pos, board, color):
     for i in range(8):
         for j in range(8):
             piece = board[j][i]
-            if not color:
+            if color:
                 if piece == 'P':
                     for square in get_pawn_territory(board, True, i, j):
                         territory[square[1]][square[0]] = True
@@ -123,25 +123,25 @@ def get_rook_territory(board, color, x, y):
     for i in range(1, x+1):
         territory.append((x-i, y))
         if board[y][x-i] != '0':
-            territory.append((x-i, y))
+            if (board[y][x-i] != 'k' and color) or (board[y][x-i] != 'K' and not color): territory.append((x-i, y))
             break
 
     for i in range(x+1, 8):
         territory.append((i, y))
         if board[y][i] != '0':
-            territory.append((i, y))
+            if (board[y][i] != 'k' and color) or (board[y][i] != 'K' and not color): territory.append((i, y))
             break
     
     for i in range(1, y+1):
         territory.append((x, y-i))
         if board[y-i][x] != '0':
-            territory.append((x, y-i))
+            if (board[y-i][x] != 'k' and color) or (board[y-i][x] != 'K' and not color): territory.append((x, y-i))
             break
 
     for i in range(y+1, 8):
         territory.append((x, i))
         if board[i][x] != '0':
-            territory.append((x, i))
+            if (board[i][x] != 'k' and color) or (board[i][x] != 'K' and not color): territory.append((x, i))
             break
 
     return territory
@@ -171,19 +171,23 @@ def get_bishop_territory(board, color, x, y):
     for i in range(1, 8):
         if diag_bott_rght and x+i < 8 and y+i < 8:
             territory.append((x+i, y+i))
-            if board[y+i][x+i] != '0': diag_bott_rght = False    
+            if board[y+i][x+i] != '0':
+                if (board[y+i][x+i] != 'k' and color) or (board[y+i][x+i] != 'K' and not color): diag_bott_rght = False  
 
         if diag_bott_left and x+i < 8 and y-i >= 0:
             territory.append((x+i, y-i))
-            if board[y-i][x+i] != '0': diag_bott_left = False
+            if board[y-i][x+i] != '0':
+                if (board[y-i][x+i] != 'k' and color) or (board[y-i][x+i] != 'K' and not color): diag_bott_left = False
 
         if diag_top_rght and x-i >= 0 and y+i < 8:
             territory.append((x-i, y+i))
-            if board[y+i][x-i] != '0': diag_top_rght = False
+            if board[y+i][x-i] != '0':
+                if (board[y+i][x-i] != 'k' and color) or (board[y+i][x-i] != 'K' and not color): diag_top_rght = False
 
         if diag_top_left and x-i >= 0 and y-i >= 0:
             territory.append((x-i, y-i))
-            if board[y-i][x-i] != '0': diag_top_left = False
+            if board[y-i][x-i] != '0':
+                if (board[y-i][x-i] != 'k' and color) or (board[y-i][x-i] != 'K' and not color): diag_top_left = False
 
     return territory
 
@@ -207,29 +211,637 @@ def get_king_territory(board, color, x, y):
 def get_moves(pos, board):
     color = True if pos.split(' ')[1] == 'w' else False
     castle_rights, en_passant = pos.split(' ')[2:4]
-    territory = get_territory(pos, board, color)
-    return [[get_moves_selected(color, board, territory, castle_rights, en_passant, i, j) for i in range(8)]for j in range(8)]
-
-def get_moves_selected(color, board, territory, castle_rights, en_passant, x , y):
-    piece = board[y][x]
-
+    territory = get_territory(pos, board, not color)
+    
+    # check and pin
+    x, y = get_king_position(board, color)
+    check, check_flag = [], False
+    pin = []
     if color:
-        if piece == 'P': return get_pawn_moves(en_passant, board, True, x, y)
-        elif piece == 'R': return get_rook_moves(board, True, x, y)
-        elif piece == 'N': return get_knight_moves(board, True, x, y)
-        elif piece == 'B': return get_bishop_moves(board, True, x, y)
-        elif piece == 'Q': return get_queen_moves(board, True, x, y)
-        elif piece == 'K': return get_king_moves(castle_rights, board, territory, True, x, y)
-        else: return []
+        if territory[y][x]:
+        
+            if x > 0:
+                if x > 1:
+                    if y > 0 and board[y-1][x-2] == 'n':
+                        check.append((x-2, y-1))
+                        check_flag = True
+                    if y < 7 and board[y+1][x-2] == 'n':
+                        check.append((x-2, y+1))
+                        check_flag = True
+                if y > 1 and board[y-2][x-1] == 'n':
+                    check.append((x-1, y-2))
+                    check_flag = True
+                if y < 6 and board[y+2][x-1] == 'n':
+                    check.append((x-1, y+2))
+                    check_flag = True
+            if x < 7:
+                if x < 6:
+                    if y > 0 and board[y-1][x+2] == 'n':
+                        check.append((x+2, y-1))
+                        check_flag = True
+                    if y < 7 and board[y+1][x+2] == 'n':
+                        check.append((x+2, y+1))
+                        check_flag = True
+                if y > 1 and board[y-2][x+1] == 'n':
+                    check.append((x+1, y-2))
+                    check_flag = True
+                if y < 6 and board[y+2][x+1] == 'n':
+                    check.append((x+1, y+2))
+                    check_flag = True
+        
+        diag_bott_rght, diag_bott_left, diag_top_rght, diag_top_left = True, True, True, True
+        bott, rght, top, left = True, True, True, True
+        diag_bott_rght_squares, diag_bott_left_squares, diag_top_rght_squares, diag_top_left_squares = [], [], [] ,[]
+        bott_squares, rght_squares, top_squares, left_squares = [], [], [], []
+        diag_bott_rght_pin, diag_bott_left_pin, diag_top_rght_pin, diag_top_left_pin = (), (), (), ()
+        bott_pin, rght_pin, top_pin, left_pin = (), (), (), ()
+        for i in range(1, 8):
+            
+            if diag_bott_rght and x+i < 8 and y+i < 8:
+                if board[y+i][x+i] == '0': diag_bott_rght_squares.append((x+i, y+i))
+                elif board[y+i][x+i] == 'b' or board[y+i][x+i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_bott_rght_pin:
+                        diag_bott_rght_squares.append((x+i, y+i))
+                        pin.append((diag_bott_rght_pin, [square for square in diag_bott_rght_squares]))
+                    else:
+                        for square in diag_bott_rght_squares: check.append(square)
+                        check.append((x+i, y+i))
+                        check_flag = True
+                    diag_bott_rght = False
+                elif get_color(board[y+i][x+i]) == color:
+                    if diag_bott_rght_pin:
+                        diag_bott_rght_pin = ()
+                        diag_bott_rght = False
+                    diag_bott_rght_squares.append((x+i, y+i))
+                    diag_bott_rght_pin = (x+i, y+i)
+                else: diag_bott_rght = False
+                    
+            if diag_bott_left and x+i < 8 and y-i >= 0:
+                if board[y-i][x+i] == '0': diag_bott_left_squares.append((x+i, y-i))
+                elif board[y-i][x+i] == 'b' or board[y-i][x+i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_bott_left_pin:
+                        diag_bott_left_pin.append((x+i, y-i))
+                        pin.append((diag_bott_left_pin, [square for square in diag_bott_left_squares]))
+                    else:
+                        for square in diag_bott_left_squares: check.append(square)
+                        check.append((x+i, y-i))
+                        check_flag = True
+                    diag_bott_left = False
+                elif get_color(board[y-i][x+i]) == color:
+                    if diag_bott_left_pin:
+                        diag_bott_left_pin = ()
+                        diag_bott_left = False
+                    diag_bott_left_squares.append((x+i, y-i))
+                    diag_bott_left_pin = (x+i, y-i)
+                else: diag_bott_left = False
+
+            if diag_top_rght and x-i >= 0 and y+i < 8:
+                if board[y+i][x-i] == '0': diag_top_rght_squares.append((x-i, y+i))
+                elif board[y+i][x-i] == 'b' or board[y+i][x-i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_top_rght_pin:
+                        diag_top_rght_squares.append((x-i, y+i))
+                        pin.append((diag_top_rght_pin, [square for square in diag_top_rght_squares]))
+                    else:
+                        for square in diag_top_rght_squares: check.append(square)
+                        check.append((x-i, y+i))
+                        check_flag = True
+                    diag_top_rght = False
+                elif get_color(board[y+i][x-i]) == color:
+                    if diag_top_rght_pin:
+                        diag_top_rght_pin = ()
+                        diag_top_rght = False
+                    diag_top_rght_squares.append((x-i, y+i))
+                    diag_top_rght_pin = (x-i, y+i)
+                else: diag_top_rght = False
+
+            if diag_top_left and x-i >= 0 and y-i >= 0:
+                if board[y-i][x-i] == '0': diag_top_left_squares.append((x-i, y-i))
+                elif board[y-i][x-i] == 'b' or board[y-i][x-i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_top_left_pin:
+                        diag_top_left_squares.append((x-i, y-i))
+                        pin.append((diag_top_left_pin, [square for square in diag_top_left_squares]))
+                    else:
+                        for square in diag_top_left_squares: check.append(square)
+                        check.append((x-i, y-i))
+                        check_flag = True
+                    diag_top_left = False
+                elif get_color(board[y-i][x-i]) == color:
+                    if diag_top_left_pin:
+                        diag_top_left_pin = ()
+                        diag_top_left = False
+                    diag_top_left_squares.append((x-i, y-i))
+                    diag_top_left_pin = (x-i, y-i)
+                else: diag_top_left = False
+            
+            if bott and y+i < 8:
+                if board[y+i][x] == '0': bott_squares.append((x, y+i))
+                elif board[y+i][x] == 'r' or board[y+i][x] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if bott_pin:
+                        bott_squares.append((x, y+i))
+                        pin.append((bott_pin, [square for square in bott_squares]))
+                    else:
+                        for square in bott_squares: check.append(square)
+                        check.append((x, y+i))
+                        check_flag = True
+                    bott = False
+                elif get_color(board[y+i][x]) == color:
+                    if bott_pin:
+                        bott_pin = ()
+                        bott = False
+                    bott_squares.append((x, y+i))
+                    bott_pin = (x, y+i)
+                else: bott = False
+            
+            if rght and x+i < 8:
+                if board[y][x+i] == '0': rght_squares.append((x+i, y))
+                elif board[y][x+i] == 'r' or board[y][x+i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if rght_pin:
+                        rght_squares.append((x+i, y))
+                        pin.append((rght_pin, [square for square in rght_squares]))
+                    else:
+                        for square in rght_squares: check.append(square)
+                        check.append((x+i, y))
+                        check_flag = True
+                    rght = False
+                elif get_color(board[y][x+i]) == color:
+                    if rght_pin:
+                        rght_pin = ()
+                        rght = False
+                    rght_squares.append((x+i, y))
+                    rght_pin = (x+i, y)
+                else: rght = False
+            
+            if top and y-i >= 0:
+                if board[y-i][x] == '0': top_squares.append((x, y-i))
+                elif board[y-i][x] == 'r' or board[y-i][x] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if top_pin:
+                        top_squares.append((x, y-i))
+                        pin.append((top_pin, [square for square in top_squares]))
+                    else:
+                        for square in top_squares: check.append(square)
+                        check.append((x, y-i))
+                        check_flag = True
+                    top = False
+                elif get_color(board[y-i][x]) == color:
+                    if top_pin:
+                        top_pin = ()
+                        top = False
+                    top_squares.append((x, y-i))
+                    top_pin = (x, y-i)
+                else: top = False
+            
+            if left and x-i >= 0:
+                if board[y][x-i] == '0': left_squares.append((x-i, y))
+                elif board[y][x-i] == 'r' or board[y][x-i] == 'q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if left_pin:
+                        left_squares.append((x-i, y))
+                        pin.append((left_pin, [square for square in left_squares]))
+                    else:
+                        for square in left_squares: check.append(square)
+                        check.append((x-i, y))
+                        check_flag = True
+                    left = False
+                elif get_color(board[y][x-i]) == color:
+                    if left_pin:
+                        left_pin = ()
+                        left = False
+                    left_squares.append((x-i, y))
+                    left_pin = (x-i, y)
+                else: left = False
+            
+    elif not color:
+        if territory[y][x]:
     
-    elif piece == 'p': return get_pawn_moves(en_passant, board, False, x, y)
-    elif piece == 'r': return get_rook_moves(board, False, x, y)
-    elif piece == 'n': return get_knight_moves(board, False, x, y)
-    elif piece == 'b': return get_bishop_moves(board, False, x, y)
-    elif piece == 'q': return get_queen_moves(board, False, x, y)
-    elif piece == 'k': return get_king_moves(castle_rights, board, territory, False, x, y)
+            if x > 0:
+                if x > 1:
+                    if y > 0 and board[y-1][x-2] == 'N':
+                        check.append((x-2, y-1))
+                        check_flag = True
+                    if y < 7 and board[y+1][x-2] == 'N':
+                        check.append((x-2, y+1))
+                        check_flag = True
+                if y > 1 and board[y-2][x-1] == 'N':
+                    check.append((x-1, y-2))
+                    check_flag = True
+                if y < 6 and board[y+2][x-1] == 'N':
+                    check.append((x-1, y+2))
+                    check_flag = True
+            if x < 7:
+                if x < 6:
+                    if y > 0 and board[y-1][x+2] == 'N':
+                        check.append((x+2, y-1))
+                        check_flag = True
+                    if y < 7 and board[y+1][x+2] == 'N':
+                        check.append((x+2, y+1))
+                        check_flag = True
+                if y > 1 and board[y-2][x+1] == 'N':
+                    check.append((x+1, y-2))
+                    check_flag = True
+                if y < 6 and board[y+2][x+1] == 'N':
+                    check.append((x+1, y+2))
+                    check_flag = True
+            
+        diag_bott_rght, diag_bott_left, diag_top_rght, diag_top_left = True, True, True, True
+        bott, rght, top, left = True, True, True, True
+        diag_bott_rght_squares, diag_bott_left_squares, diag_top_rght_squares, diag_top_left_squares = [], [], [] ,[]
+        bott_squares, rght_squares, top_squares, left_squares = [], [], [], []
+        diag_bott_rght_pin, diag_bott_left_pin, diag_top_rght_pin, diag_top_left_pin = (), (), (), ()
+        bott_pin, rght_pin, top_pin, left_pin = (), (), (), ()
+        for i in range(1, 8):
+            
+            if diag_bott_rght and x+i < 8 and y+i < 8:
+                if board[y+i][x+i] == '0': diag_bott_rght_squares.append((x+i, y+i))
+                elif board[y+i][x+i] == 'B' or board[y+i][x+i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_bott_rght_pin:
+                        diag_bott_rght_squares.append((x+i, y+i))
+                        pin.append((diag_bott_rght_pin, [square for square in diag_bott_rght_squares]))
+                    else:
+                        for square in diag_bott_rght_squares: check.append(square)
+                        check.append((x+i, y+i))
+                        check_flag = True
+                    diag_bott_rght = False
+                elif get_color(board[y+i][x+i]) is color:
+                    if diag_bott_rght_pin:
+                        diag_bott_rght_pin = ()
+                        diag_bott_rght = False
+                    diag_bott_rght_squares.append((x+i, y+i))
+                    diag_bott_rght_pin = (x+i, y+i)
+                else: diag_bott_rght = False
+            
+            if diag_bott_left and x+i < 8 and y-i >= 0:
+                if board[y-i][x+i] == '0': diag_bott_left_squares.append((x+i, y-i))
+                elif board[y-i][x+i] == 'B' or board[y-i][x+i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_bott_left_pin:
+                        diag_bott_left_squares.append((x+i, y-i))
+                        pin.append((diag_bott_left_pin, [square for square in diag_bott_left_squares]))
+                    else:
+                        for square in diag_bott_left_squares: check.append(square)
+                        check.append((x+i, y-i))
+                        check_flag = True
+                    diag_bott_left = False
+                elif get_color(board[y-i][x+i]) is color:
+                    if diag_bott_left_pin:
+                        diag_bott_left_pin = ()
+                        diag_bott_left = False
+                    diag_bott_left_squares.append((x+i, y-i))
+                    diag_bott_left_pin = (x+i, y-i)
+                else: diag_bott_left = False
+            
+            if diag_top_rght and x-i >= 0 and y+i < 8:
+                if board[y+i][x-i] == '0': diag_top_rght_squares.append((x-i, y+i))
+                elif board[y+i][x-i] == 'B' or board[y+i][x-i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_top_rght_pin:
+                        diag_top_rght_squares.append((x-i, y+i))
+                        pin.append((diag_top_rght_pin, [square for square in diag_top_rght_squares]))
+                    else:
+                        for square in diag_top_rght_squares: check.append(square)
+                        check.append((x-i, y+i))
+                        check_flag = True
+                    diag_top_rght = False
+                elif get_color(board[y+i][x-i]) is color:
+                    if diag_top_rght_pin:
+                        diag_top_rght_pin = ()
+                        diag_top_rght = False
+                    diag_top_rght_squares.append((x-i, y+i))
+                    diag_top_rght_pin = (x-i, y+i)
+                else: diag_top_rght = False
+            
+            if diag_top_left and x-i >= 0 and y-i >= 0:
+                if board[y-i][x-i] == '0':
+                    diag_top_left_squares.append((x-i, y-i))
+                elif board[y-i][x-i] == 'B' or board[y-i][x-i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if diag_top_left_pin:
+                        diag_top_left_squares.append((x-i, y-i))
+                        pin.append((diag_top_left_pin, [square for square in diag_top_left_squares]))
+                    else:
+                        for square in diag_top_left_squares: check.append(square)
+                        check.append((x-i, y-i))
+                        check_flag = True
+                    diag_top_left = False
+                elif get_color(board[y-i][x-i]) is color:
+                    if diag_top_left_pin:
+                        diag_top_left_pin = ()
+                        diag_top_left = False
+                    diag_top_left_squares.append((x-i, y-i))
+                    diag_top_left_pin = (x-i, y-i)
+                else: diag_top_left = False
+            
+            if bott and y+i < 8:
+                if board[y+i][x] == '0': bott_squares.append((x, y+i))
+                elif board[y+i][x] == 'R' or board[y+i][x] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if bott_pin:
+                        bott_squares.append((x, y+i))
+                        pin.append((bott_pin, [square for square in bott_squares]))
+                    else:
+                        for square in bott_squares: check.append(square)
+                        check.append((x, y+i))
+                        check_flag = True
+                    bott = False
+                elif get_color(board[y+i][x]) is color:
+                    if bott_pin:
+                        bott_pin = ()
+                        bott = False
+                    bott_squares.append((x, y+i))
+                    bott_pin = (x, y+i)
+                else: bott = False
+            
+            if rght and x+i < 8:
+                if board[y][x+i] == '0': rght_squares.append((x+i, y))
+                elif board[y][x+i] == 'R' or board[y][x+i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if rght_pin:
+                        rght_squares.append((x+i, y))
+                        pin.append((rght_pin, [square for square in rght_squares]))
+                    else:
+                        for square in rght_squares: check.append(square)
+                        check.append((x+i, y))
+                        check_flag = True
+                    rght = False
+                elif get_color(board[y][x+i]) is color:
+                    if rght_pin:
+                        rght_pin = ()
+                        rght = False
+                    rght_squares.append((x+i, y))
+                    rght_pin = (x+i, y)
+                else: rght = False
+            
+            if top and y-i >= 0:
+                if board[y-i][x] == '0': top_squares.append((x, y-i))
+                elif board[y-i][x] == 'R' or board[y-i][x] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if top_pin: pin.append((top_pin, [square for square in top_squares]))
+                    else:
+                        for square in top_squares:
+                            top_squares.append(square)
+                            check.append(square)
+                        check.append((x, y-i))
+                        check_flag = True
+                    top = False
+                elif get_color(board[y-i][x]) is color:
+                    if top_pin:
+                        top_pin = ()
+                        top = False
+                    top_squares.append((x, y-i))
+                    top_pin = (x, y-i)
+                else: top = False
+            
+            if left and x-i >= 0:
+                if board[y][x-i] == '0': left_squares.append((x-i, y))
+                elif board[y][x-i] == 'R' or board[y][x-i] == 'Q':
+                    if check_flag:
+                        check = [None]
+                        break
+                    if left_pin:
+                        left_squares.append((x-i, y))
+                        pin.append((left_pin, [square for square in left_squares]))
+                    else:
+                        for square in left_squares: check.append(square)
+                        check.append((x-i, y))
+                        check_flag = True
+                    left = False
+                elif get_color(board[y][x-i]) is color:
+                    if left_pin:
+                        left_pin = ()
+                        left = False
+                    left_squares.append((x-i, y))
+                    left_pin = (x-i, y)
+                else: left = False
+    print('c', check)
+    print('p', pin)
+            
+    return [[get_moves_selected(color, board, territory, castle_rights, en_passant, check, pin, i, j) for i in range(8)]for j in range(8)]
+
+def get_king_position(board, color):
+    for i in range(8):
+        for j in range(8):
+            if color:
+                if board[j][i] == 'K':
+                    return (i, j)
+            else:
+                if board[j][i] == 'k':
+                    return (i, j)
+
+def get_moves_selected(color, board, territory, castle_rights, en_passant, check, pin, x , y):
+    piece = board[y][x]
+    moves = []
     
-    else: return []
+    pinned = False
+    for square in pin:
+        if (x, y) == square[0]:
+            pinned = True
+            pinned_squares = square[1]
+    
+    if color:
+        if piece == 'K': return get_king_moves(castle_rights, board, territory, color, x, y)
+        
+        elif piece == 'P':
+            for move in get_pawn_moves(en_passant, board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'R':
+            for move in get_rook_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'N':
+            for move in get_knight_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'B':
+            for move in get_bishop_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'Q':
+            for move in get_queen_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+    
+    else:
+        if piece == 'k': return get_king_moves(castle_rights, board, territory, color, x, y)
+        
+        elif piece == 'p':
+            for move in get_pawn_moves(en_passant, board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'r':
+            for move in get_rook_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'n':
+            for move in get_knight_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'b':
+            for move in get_bishop_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+        
+        elif piece == 'q':
+            for move in get_queen_moves(board, color, x, y): moves.append(move)
+            if check:
+                check_moves = moves[:]
+                for square in check_moves:
+                    moves.remove(square) if square not in check else None
+            if pinned:
+                pinned_moves = moves[:]
+                for square in pinned_moves:
+                    moves.remove(square) if square not in pinned_squares else None
+
+    # if check:
+    #     moves = []
+    #     if color:
+    #         if piece == 'K': return get_king_moves(castle_rights, board, territory, True, x, y)
+    #         elif piece == 'P':
+    #             for square in get_pawn_moves(en_passant, board, True, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'R':
+    #             for square in get_rook_moves(board, True, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'N':
+    #             for square in get_knight_moves(board, True, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'B':
+    #             for square in get_bishop_moves(board, True, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'Q':
+    #             for square in get_queen_moves(board, True, x, y): moves.append(square) if square in check else None
+    #     elif not color:
+    #         if piece == 'k': return get_king_moves(castle_rights, board, territory, False, x, y)
+    #         elif piece == 'p':
+    #             for square in get_pawn_moves(en_passant, board, False, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'r':
+    #             for square in get_rook_moves(board, False, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'n':
+    #             for square in get_knight_moves(board, False, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'b':
+    #             for square in get_bishop_moves(board, False, x, y): moves.append(square) if square in check else None
+    #         elif piece == 'q':
+    #             for square in get_queen_moves(board, False, x, y): moves.append(square) if square in check else None
+    # print(x, y, moves)
+    return moves
+    # if True in [(x, y) == squares[0] for squares in pin]:
+    #     pin_squares = [squares[1] for squares in pin if (x, y) == squares[0]]
+    #     moves = []
+    #     if piece == 'P':
+    #         None
+        
+    
+    # if color:
+    #     if piece == 'P': return get_pawn_moves(en_passant, board, True, x, y)
+    #     elif piece == 'R': return get_rook_moves(board, True, x, y)
+    #     elif piece == 'N': return get_knight_moves(board, True, x, y)
+    #     elif piece == 'B': return get_bishop_moves(board, True, x, y)
+    #     elif piece == 'Q': return get_queen_moves(board, True, x, y)
+    #     elif piece == 'K': return get_king_moves(castle_rights, board, territory, True, x, y)
+    #     else: return []
+    
+    # elif piece == 'p': return get_pawn_moves(en_passant, board, False, x, y)
+    # elif piece == 'r': return get_rook_moves(board, False, x, y)
+    # elif piece == 'n': return get_knight_moves(board, False, x, y)
+    # elif piece == 'b': return get_bishop_moves(board, False, x, y)
+    # elif piece == 'q': return get_queen_moves(board, False, x, y)
+    # elif piece == 'k': return get_king_moves(castle_rights, board, territory, False, x, y)
+    
+    # else: return []
 
 def get_pawn_moves(en_passant, board, color, x, y):
     moves = []
@@ -363,17 +975,21 @@ def get_king_moves(castle_rights, board, territory, color, x, y):
     if color:
         if 'K' in castle_rights:
             if board[7][5] == '0' and board[7][6] == '0':
-                moves.append((6, 7))
+                if not (territory[7][4] or territory[7][5] or territory[7][6]):
+                    moves.append((6, 7))
         if 'Q' in castle_rights:
             if board[7][1] == '0' and board[7][2] == '0' and board[7][3] == '0':
-                moves.append((2, 7))
+                if not (territory[7][4] or territory[7][3] or territory[7][2] or territory[7][1]):
+                    moves.append((2, 7))
     else:
         if 'k' in castle_rights:
             if board[0][5] == '0' and board[0][6] == '0':
-                moves.append((6, 0))
+                if not (territory[0][4] or territory[0][5] or territory[0][6]):
+                    moves.append((6, 0))
         if 'q' in castle_rights:
             if board[0][1] == '0' and board[0][2] == '0' and board[0][3] == '0':
-                moves.append((2, 0))
+                if not (territory[0][4] or territory[0][3] or territory[0][2] or territory[0][1]):
+                    moves.append((2, 0))
 
     return moves
 

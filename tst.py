@@ -9,21 +9,21 @@ import sys
 pygame.init()
 
 original_pieces = {
-    'P' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/P' + str(P) +'.png') for P in range(2)],
-    'K' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/K' + str(K) +'.png') for K in range(2)],
-    'Q' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/Q' + str(Q) +'.png') for Q in range(2)],
-    'R' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/R' + str(R) +'.png') for R in range(2)],
-    'B' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/B' + str(B) +'.png') for B in range(2)],
-    'N' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/White/N' + str(N) +'.png') for N in range(2)],
+    'P' :[pygame.image.load('data/png/pieces/White/P' + str(P) +'.png') for P in range(2)],
+    'K' :[pygame.image.load('data/png/pieces/White/K' + str(K) +'.png') for K in range(2)],
+    'Q' :[pygame.image.load('data/png/pieces/White/Q' + str(Q) +'.png') for Q in range(2)],
+    'R' :[pygame.image.load('data/png/pieces/White/R' + str(R) +'.png') for R in range(2)],
+    'B' :[pygame.image.load('data/png/pieces/White/B' + str(B) +'.png') for B in range(2)],
+    'N' :[pygame.image.load('data/png/pieces/White/N' + str(N) +'.png') for N in range(2)],
 
-    'p' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/p' + str(p) +'.png') for p in range(2)],
-    'k' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/k' + str(k) +'.png') for k in range(2)],
-    'q' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/q' + str(q) +'.png') for q in range(2)],
-    'r' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/r' + str(r) +'.png') for r in range(2)],
-    'b' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/b' + str(b) +'.png') for b in range(2)],
-    'n' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/Black/n' + str(n) +'.png') for n in range(2)],
+    'p' :[pygame.image.load('data/png/pieces/Black/p' + str(p) +'.png') for p in range(2)],
+    'k' :[pygame.image.load('data/png/pieces/Black/k' + str(k) +'.png') for k in range(2)],
+    'q' :[pygame.image.load('data/png/pieces/Black/q' + str(q) +'.png') for q in range(2)],
+    'r' :[pygame.image.load('data/png/pieces/Black/r' + str(r) +'.png') for r in range(2)],
+    'b' :[pygame.image.load('data/png/pieces/Black/b' + str(b) +'.png') for b in range(2)],
+    'n' :[pygame.image.load('data/png/pieces/Black/n' + str(n) +'.png') for n in range(2)],
 
-    '0' :[pygame.image.load('E:/Projects/ChessAI/data/png/pieces/0' + str(i) +'.png') for i in range(2)]
+    '0' :[pygame.image.load('data/png/pieces/0' + str(i) +'.png') for i in range(2)]
     }
 
 original_width, original_height = 640, 640
@@ -102,7 +102,7 @@ def board_to_FEN(board):
                     fen_row += str(empty_count)
                     empty_count = 0
                 fen_row += cell
-        
+
         if empty_count > 0:
             fen_row += str(empty_count)
         
@@ -112,10 +112,15 @@ def board_to_FEN(board):
     
     return fen_position + " w KQkq - 0 1"
 
+def flip_board(board):
+    return [row[::-1] for row in board[::-1]]
+
 init_pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 # init_pos = 'R7/8/8/4R3/8/8/8/8 w KQkq - 0 1'
 
+board_flip = True
 board = FEN_to_board(init_pos)
+flipped_board = flip_board(board)
 # board = [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
 #          ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
 #          ['0', '0', '0', '0', '0', '0', '0', '0'],
@@ -126,7 +131,11 @@ board = FEN_to_board(init_pos)
 #          ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
 
 moves = chessPY.get_moves(init_pos, board)
+flipped_moves = flip_board(moves)
 pos = init_pos
+print(pos)
+
+move_list = [pos]
 selected = False
 
 window_size = (original_width, original_height)
@@ -145,7 +154,12 @@ while running:
                 if selected:
                     if new_selected in moves[selected[1]][selected[0]]:
                         pos, board = chessPY.make_move(pos, selected, new_selected, board)
+                        flipped_board = flip_board(board)
+                        print(pos)
+                        
+                        move_list.append(pos)
                         moves = chessPY.get_moves(pos, board)
+                        flipped_moves = flip_board(moves)
                         selected = False
 
                     elif board[new_selected[1]][new_selected[0]] == '0': selected = False
@@ -153,6 +167,15 @@ while running:
                 else:
                     if board[new_selected[1]][new_selected[0]] == '0': selected = False
                     else: selected = new_selected
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                if len(move_list) > 1:
+                    move_list.pop()
+                    pos = move_list[-1]
+                    board = FEN_to_board(pos)
+                    moves = chessPY.get_moves(pos, board)
+                    selected = False
 
         elif event.type == pygame.VIDEORESIZE:
             window_size = maintain_aspect_ratio(event.size)
@@ -160,8 +183,24 @@ while running:
 
             pieces = transform_scale(original_pieces, window_size[0], window_size[1])
             
+            capture_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
+            move_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
+            pygame.draw.circle(capture_screen,(100, 100, 100, 100), 
+                            ((window_size[0]/16), (window_size[1]/16)), 
+                            window_size[1]//16, window_size[1]//90)
+            pygame.draw.circle(move_screen,(100, 100, 100, 100), 
+                            ((window_size[0]/16), (window_size[1]/16)), 
+                            window_size[1]//50)
+            
             screen = pygame.display.set_mode(window_size, pygame.RESIZABLE)
 
+    if board_flip and pos.split(' ')[1] == 'b':
+        # print('flipped')
+        for i in range(0, 8):
+            for j in range(0, 8):
+                screen.blit(pieces[flipped_board[j][i]][(i+j)%2], 
+                            (i*window_size[0]/8, j*window_size[1]/8))
+    
     for i in range(0, 8):
         for j in range(0, 8):
             screen.blit(pieces[board[j][i]][(i+j)%2], 
@@ -172,6 +211,12 @@ while running:
                             pygame.Rect(selected[0] * window_size[0]/8, selected[1] * window_size[1]/8, 
                                         window_size[0]/8, window_size[1]/8), 
                             window_size[0]//128)
+        if board_flip and pos.split(' ')[1] == 'b':
+            for move in flipped_moves[selected[1]][selected[0]]:
+                if board[move[1]][move[0]] == '0':
+                    screen.blit(move_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
+                else:
+                    screen.blit(capture_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
         for move in moves[selected[1]][selected[0]]:
             if board[move[1]][move[0]] == '0':
                 screen.blit(move_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
