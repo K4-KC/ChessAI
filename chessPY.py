@@ -1,3 +1,5 @@
+import numpy as np
+
 def FEN_to_board(pos):
     board_part = pos.split(' ')[0]
     rows = board_part.split('/')
@@ -656,7 +658,22 @@ def get_moves(pos, board):
             
     return [[get_moves_selected(color, board, territory, castle_rights, en_passant, check, pin, i, j) for i in range(8)]for j in range(8)]
 
-def get_king_position(board, color):
+def get_king_position(board, color=None):
+    if color is None:
+        found = False
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'K':
+                    if found:
+                        return ((i, j), found_pos)
+                    found_pos = (i, j)
+                    found = True
+                elif board[j][i] == 'k':
+                    if found:
+                        return (found_pos, (i, j))
+                    found_pos = (i, j)
+                    found = True
+                    
     for i in range(8):
         for j in range(8):
             if color:
@@ -1030,3 +1047,121 @@ def make_move(pos, selected, new_selected, board):
     
     pos = board_to_FEN(pos, board, True, castle_rights, en_passant)
     return (pos, board)
+
+def board_to_neural(board, color):
+    neural_board = np.empty((0, 1), dtype=np.int8)
+    neural_board = np.append(neural_board, get_king_neuron(board, color))
+    neural_board = np.append(neural_board, get_pawn_neuron(board, color))
+    neural_board = np.append(neural_board, get_rook_neuron(board, color))
+    neural_board = np.append(neural_board, get_knight_neuron(board, color))
+    neural_board = np.append(neural_board, get_bishop_neuron(board, color))
+    neural_board = np.append(neural_board, get_queen_neuron(board, color))
+    
+    return np.reshape(neural_board, (1, 768))
+
+def get_pawn_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    if color:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'P': neurons[j*8+i] = 1
+                elif board[j][i] == 'p': neurons[64 + j*8+i] = 1
+
+    else:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'p': neurons[j*8+i] = 1
+                elif board[j][i] == 'P': neurons[64 + j*8+i] = 1
+    
+    return neurons
+
+def get_rook_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    if color:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'R': neurons[j*8+i] = 1
+                elif board[j][i] == 'r': neurons[64 + j*8+i] = 1
+
+    else:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'r': neurons[j*8+i] = 1
+                elif board[j][i] == 'R': neurons[64 + j*8+i] = 1
+    
+    return neurons
+
+def get_knight_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    if color:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'N': neurons[j*8+i] = 1
+                elif board[j][i] == 'n': neurons[64 + j*8+i] = 1
+
+    else:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'n': neurons[j*8+i] = 1
+                elif board[j][i] == 'N': neurons[64 + j*8+i] = 1
+                
+    return neurons
+
+def get_bishop_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    if color:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'B': neurons[j*8+i] = 1
+                elif board[j][i] == 'b': neurons[64 + j*8+i] = 1
+
+    else:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'b': neurons[j*8+i] = 1
+                elif board[j][i] == 'B': neurons[64 + j*8+i] = 1
+                
+    return neurons
+
+def get_queen_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    if color:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'Q': neurons[j*8+i] = 1
+                elif board[j][i] == 'q': neurons[64 + j*8+i] = 1
+
+    else:
+        for i in range(8):
+            for j in range(8):
+                if board[j][i] == 'q': neurons[j*8+i] = 1
+                elif board[j][i] == 'Q': neurons[64 + j*8+i] = 1
+                
+    return neurons
+
+def get_king_neuron(board, color):
+    
+    neurons = np.zeros((128), dtype=np.int8)
+    squares = get_king_position(board)
+    
+    neurons[squares[0][1]*8 + squares[0][0]] = 1 if color else 0
+    neurons[squares[1][1]*8 + squares[1][0]] = 1 if color else 0
+    neurons[squares[0][1]*8 + squares[0][0] + 64] = 1 if not color else 0
+    neurons[squares[1][1]*8 + squares[1][0] + 64] = 1 if not color else 0
+                
+    return neurons
+
+# tst = np.empty((0))
+
+# pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+# board = FEN_to_board(pos)
+# tst = board_to_neural(board, True)
+
+# print(tst)
+# print(tst.shape)
+# print(tst.dtype)

@@ -13,12 +13,16 @@ plt.show()
 
 model = tf.keras.models.Sequential([
   tf.keras.layers.Flatten(input_shape=(28, 28)),
-  tf.keras.layers.Dense(10000, activation='relu'),
+  tf.keras.layers.Dense(10, activation='relu'),
   tf.keras.layers.Dropout(0.2),
   tf.keras.layers.Dense(10)
 ])
 
+print(x_train[:1].shape)
+
 predictions = model(x_train[:1]).numpy()
+
+print(predictions.shape)
 
 tf.nn.softmax(predictions).numpy()
 
