@@ -123,25 +123,29 @@ def get_rook_territory(board, color, x, y):
     for i in range(1, x+1):
         territory.append((x-i, y))
         if board[y][x-i] != '0':
-            if (board[y][x-i] != 'k' and color) or (board[y][x-i] != 'K' and not color): territory.append((x-i, y))
+            if (board[y][x-i] == 'k' and color) or (board[y][x-i] == 'K' and not color): 
+                if i != x: territory.append((x-i-1, y))
             break
 
     for i in range(x+1, 8):
         territory.append((i, y))
         if board[y][i] != '0':
-            if (board[y][i] != 'k' and color) or (board[y][i] != 'K' and not color): territory.append((i, y))
+            if (board[y][i] == 'k' and color) or (board[y][i] == 'K' and not color):
+                if i != 7: territory.append((i+1, y))
             break
     
     for i in range(1, y+1):
         territory.append((x, y-i))
         if board[y-i][x] != '0':
-            if (board[y-i][x] != 'k' and color) or (board[y-i][x] != 'K' and not color): territory.append((x, y-i))
+            if (board[y-i][x] == 'k' and color) or (board[y-i][x] == 'K' and not color):
+                if i != y: territory.append((x, y-i-1))
             break
 
     for i in range(y+1, 8):
         territory.append((x, i))
         if board[i][x] != '0':
-            if (board[i][x] != 'k' and color) or (board[i][x] != 'K' and not color): territory.append((x, i))
+            if (board[i][x] == 'k' and color) or (board[i][x] == 'K' and not color):
+                if i != 7: territory.append((x, i+1))
             break
 
     return territory
@@ -649,8 +653,6 @@ def get_moves(pos, board):
                     left_squares.append((x-i, y))
                     left_pin = (x-i, y)
                 else: left = False
-    print('c', check)
-    print('p', pin)
             
     return [[get_moves_selected(color, board, territory, castle_rights, en_passant, check, pin, i, j) for i in range(8)]for j in range(8)]
 
@@ -790,58 +792,7 @@ def get_moves_selected(color, board, territory, castle_rights, en_passant, check
                 for square in pinned_moves:
                     moves.remove(square) if square not in pinned_squares else None
 
-    # if check:
-    #     moves = []
-    #     if color:
-    #         if piece == 'K': return get_king_moves(castle_rights, board, territory, True, x, y)
-    #         elif piece == 'P':
-    #             for square in get_pawn_moves(en_passant, board, True, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'R':
-    #             for square in get_rook_moves(board, True, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'N':
-    #             for square in get_knight_moves(board, True, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'B':
-    #             for square in get_bishop_moves(board, True, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'Q':
-    #             for square in get_queen_moves(board, True, x, y): moves.append(square) if square in check else None
-    #     elif not color:
-    #         if piece == 'k': return get_king_moves(castle_rights, board, territory, False, x, y)
-    #         elif piece == 'p':
-    #             for square in get_pawn_moves(en_passant, board, False, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'r':
-    #             for square in get_rook_moves(board, False, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'n':
-    #             for square in get_knight_moves(board, False, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'b':
-    #             for square in get_bishop_moves(board, False, x, y): moves.append(square) if square in check else None
-    #         elif piece == 'q':
-    #             for square in get_queen_moves(board, False, x, y): moves.append(square) if square in check else None
-    # print(x, y, moves)
     return moves
-    # if True in [(x, y) == squares[0] for squares in pin]:
-    #     pin_squares = [squares[1] for squares in pin if (x, y) == squares[0]]
-    #     moves = []
-    #     if piece == 'P':
-    #         None
-        
-    
-    # if color:
-    #     if piece == 'P': return get_pawn_moves(en_passant, board, True, x, y)
-    #     elif piece == 'R': return get_rook_moves(board, True, x, y)
-    #     elif piece == 'N': return get_knight_moves(board, True, x, y)
-    #     elif piece == 'B': return get_bishop_moves(board, True, x, y)
-    #     elif piece == 'Q': return get_queen_moves(board, True, x, y)
-    #     elif piece == 'K': return get_king_moves(castle_rights, board, territory, True, x, y)
-    #     else: return []
-    
-    # elif piece == 'p': return get_pawn_moves(en_passant, board, False, x, y)
-    # elif piece == 'r': return get_rook_moves(board, False, x, y)
-    # elif piece == 'n': return get_knight_moves(board, False, x, y)
-    # elif piece == 'b': return get_bishop_moves(board, False, x, y)
-    # elif piece == 'q': return get_queen_moves(board, False, x, y)
-    # elif piece == 'k': return get_king_moves(castle_rights, board, territory, False, x, y)
-    
-    # else: return []
 
 def get_pawn_moves(en_passant, board, color, x, y):
     moves = []
@@ -1029,8 +980,8 @@ def make_move(pos, selected, new_selected, board):
 
         # castling
         if board[selected[1]][selected[0]] == 'K':
-            castle_rights = castle_rights.replace('K', '')
-            castle_rights = castle_rights.replace('Q', '')
+            castle_rights = castle_rights.replace('KQ', '')
+            if castle_rights == '': castle_rights = '-'
             if selected == (4, 7) and new_selected == (6, 7):
                 board[7][5] = 'R'
                 board[7][7] = '0'
@@ -1038,8 +989,8 @@ def make_move(pos, selected, new_selected, board):
                 board[7][3] = 'R'
                 board[7][0] = '0'
         elif board[selected[1]][selected[0]] == 'k':
-            castle_rights = castle_rights.replace('k', '')
-            castle_rights = castle_rights.replace('q', '')
+            castle_rights = castle_rights.replace('kq', '')
+            if castle_rights == '': castle_rights = '-'
             if selected == (4, 0) and new_selected == (6, 0):
                 board[0][5] = 'r'
                 board[0][7] = '0'
@@ -1049,13 +1000,18 @@ def make_move(pos, selected, new_selected, board):
         elif board[selected[1]][selected[0]] == 'R':
             if selected == (0, 7):
                 castle_rights = castle_rights.replace('Q', '')
+                if castle_rights == '': castle_rights = '-'
             elif selected == (7, 7):
                 castle_rights = castle_rights.replace('K', '')
+                if castle_rights == '': castle_rights = '-'
         elif board[selected[1]][selected[0]] == 'r':
             if selected == (0, 0):
                 castle_rights = castle_rights.replace('q', '')
+                if castle_rights == '': castle_rights = '-'
             elif selected == (7, 0):
                 castle_rights = castle_rights.replace('k', '')
+                if castle_rights == '': castle_rights = '-'
+                
 
         board[new_selected[1]][new_selected[0]] = board[selected[1]][selected[0]]
         board[selected[1]][selected[0]] = '0'
