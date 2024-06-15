@@ -17,7 +17,8 @@ def FEN_to_board(pos):
     
     return board
 
-def board_to_FEN(pos, board, move=False, castle_rights='KQkq', en_passant='-'):
+def board_to_FEN(board, pos='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 
+                 move=False, castle_rights='KQkq', en_passant='-'):
 
     pos_part = [pos.split(' ')[i] for i in range(1, 6)]
     if move:
@@ -1045,7 +1046,7 @@ def make_move(pos, selected, new_selected, board):
         if board[new_selected[1]][new_selected[0]] == 'p':
             board[new_selected[1]][new_selected[0]] = 'q'
     
-    pos = board_to_FEN(pos, board, True, castle_rights, en_passant)
+    pos = board_to_FEN(board, pos, True, castle_rights, en_passant)
     return (pos, board)
 
 def board_to_neural(board, color):
@@ -1155,13 +1156,3 @@ def get_king_neuron(board, color):
     neurons[squares[1][1]*8 + squares[1][0] + 64] = 1 if not color else 0
                 
     return neurons
-
-# tst = np.empty((0))
-
-# pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-# board = FEN_to_board(pos)
-# tst = board_to_neural(board, True)
-
-# print(tst)
-# print(tst.shape)
-# print(tst.dtype)

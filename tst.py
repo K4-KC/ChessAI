@@ -84,25 +84,38 @@ model = tf.keras.models.Sequential([
 
 while running:
     
+    color = True if pos.split(' ')[1] else False
     # get moves
     moves = chessPY.get_moves(pos, board)
+    if moves == [[[] for i in range(8)] for j in range(8)]:
+        print('White won' if pos.split(' ')[1] == 'b' else 'Black won')
+        break
     
     predictions = [[np.zeros([0,]) for i in range(8)] for j in range(8)]
+    max_prediction, max_prediction_square, max_prediction_square_move = 0, (0, 0), (0, 0)
     for row in range(8):
         for move_set in range(8):
             if moves[row][move_set] != []:
 
                 piece_moves = [chessPY.make_move(
-                    pos, (move_set, row), move, board) for move in moves[row][move_set]]
+                    pos[:], (move_set, row), move, board[:]) for move in moves[row][move_set]]
+                print(pos)
                 
                 move_input = np.array([chessPY.board_to_neural(
                     future_board, True if future_pos.split(' ')[1] == 'b' else False) 
-                                                    for future_pos, future_board in piece_moves])
-                print(move_input.shape)
-                predictions[row][move_set] = model.predict(move_input)
-                print(predictions[row][move_set].tolist())
-                print()
-            
+                                       for future_pos, future_board in piece_moves])
+                prediction = model.predict(move_input)
+                # print(prediction)
+                if max(prediction) > max_prediction:
+                    max_prediction = max(prediction)
+                    max_prediction_square = (move_set, row)
+                    max_prediction_square_move = moves[row][move_set][np.argmax(prediction)]
+                predictions[row][move_set] = prediction
+    
+    print(pos, max_prediction_square, max_prediction_square_move)
+    pos, board = chessPY.make_move(pos[:], max_prediction_square, max_prediction_square_move, board[:])
+    print(pos)
+    # print(max_prediction_square, max_prediction_square_move)
     # print(move_input[6][7].shape)
             
             # for move in moves[row][move_set]:
@@ -140,7 +153,8 @@ while running:
     
     # print(predictions)
     
-    running = False
+    # running = False
+    # print(max_prediction, max_prediction_square, max_prediction_square_move)
 
 
 # while running:
