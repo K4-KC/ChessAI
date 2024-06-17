@@ -1,6 +1,7 @@
 from distutils.core import setup, Extension
+import os
 
-module1 = Extension('chess', sources = ['chess.cpp'])
+module1 = Extension('chess', sources = ['chessLib/chess.cpp'])
 
 setup (name = 'chess',
        version = '1.0',
