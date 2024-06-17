@@ -1,7 +1,7 @@
-chess.cpp
 setup.py
 tst.cpp
 chess.egg-info/PKG-INFO
 chess.egg-info/SOURCES.txt
 chess.egg-info/dependency_links.txt
 chess.egg-info/top_level.txt
+chessLib/chess.cpp
