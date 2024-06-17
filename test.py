@@ -70,23 +70,30 @@ import time, timeit
 
 pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
-setupCode = '''import chessPY
+setupCode = '''
+import chessPY
 import chess
-pos = 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w KQkq - 0 1' '''
-codeSnippetChess = '''b = chess.FEN_to_board(pos)'''
-codeSnippetChessPY = '''b = chessPY.FEN_to_board(pos)'''
+pos = 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w KQkq - 0 1' 
+board = [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
+'''
+codeSnippetChess = '''b = chess.board_to_FEN(board)'''
+codeSnippetChessPY = '''b = chessPY.board_to_FEN(board)'''
 
-a = timeit.repeat(setup= setupCode,
-              stmt= codeSnippetChess,
-              repeat=3, number=1000000)
-print('cpp: ', sum(a)/len(a))
+# a = timeit.repeat(setup= setupCode,
+#               stmt= codeSnippetChess,
+#               repeat=3, number=1000000)
+# print('cpp: ', sum(a)/len(a))
 
-a = timeit.repeat(setup= setupCode,
-              stmt= codeSnippetChessPY,
-              repeat=3, number=1000000)
-print('py: ', sum(a)/len(a))
+# a = timeit.repeat(setup= setupCode,
+#               stmt= codeSnippetChessPY,
+#               repeat=3, number=1000000)
+# print('py: ', sum(a)/len(a))
 
-# print(chess.FEN_to_board_test(pos))
+# print(chess.FEN_to_board(pos))
+
+board = [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0', '0', '0'], ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
+
+print(chess.board_to_FEN(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", True))
 
 # t1 = time.time()
 # for i in range(1000000):

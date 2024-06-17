@@ -49,81 +49,106 @@ board_to_FEN(PyObject *self, PyObject *args) {
     const char *castle_rights = "KQkq";
     const char *en_passant = "-";
     
-    if (!PyArg_ParseTuple(args, "O|ssis", &board, &pos, &move, &pawn_move, &castle_rights, &en_passant)) {
+    if (!PyArg_ParseTuple(args, "O|si", &board, &pos, &move, &pawn_move, &castle_rights, &en_passant)) {
         return NULL;
     }
 
+    if(move) {
+        system("echo move");
+    }
+
+    std::string fen = "";
     short currRow = 0;
 
     while(currRow < 8) {
-        PyObject *row = PyList_GetItem(board, currRow);
+        PyObject *row = PyList_GetItem(board, currRow++);
         short currCol = 0;
+        short empty = 0;
 
         while(currCol < 8) {
-            PyObject *cell = PyList_GetItem(row, currCol);
+            PyObject *cell = PyList_GetItem(row, currCol++);
             const char *cell_str = PyUnicode_AsUTF8(cell);
 
-            currCol++;
-        }
-
-        currRow++;
-    }
-
-
-    std::vector<std::string> pos_part;
-    std::string position(pos);
-    std::stringstream ss(position);
-    std::string temp;
-    while (ss >> temp) {
-        pos_part.push_back(temp);
-    }
-    if (move) {
-        pos_part[1] = (pos_part[1] == "w") ? "b" : "w";
-        pos_part[2] = castle_rights;
-        pos_part[3] = en_passant;
-        pos_part[4] = (pawn_move) ? "0" : std::to_string(std::stoi(pos_part[4]) + 1);
-        pos_part[5] = (pos_part[1] == "w") ? pos_part[5] : std::to_string(std::stoi(pos_part[5]) + 1);
-    }
-    std::string pos_part_str = " ";
-    for (size_t i = 1; i < pos_part.size(); ++i) {
-        pos_part_str += pos_part[i] + " ";
-    }
-    pos_part_str = pos_part_str.substr(0, pos_part_str.size() - 1);
-
-    std::vector<std::string> fen_rows;
-    Py_ssize_t num_rows = PyList_Size(board);
-    for (Py_ssize_t i = 0; i < num_rows; ++i) {
-        PyObject *row = PyList_GetItem(board, i);
-        std::string fen_row = "";
-        int empty_count = 0;
-        
-        Py_ssize_t num_cols = PyList_Size(row);
-        for (Py_ssize_t j = 0; j < num_cols; ++j) {
-            PyObject *cell = PyList_GetItem(row, j);
-            const char *cell_str = PyUnicode_AsUTF8(cell);
-            if (strcmp(cell_str, "0") == 0) {
-                empty_count++;
-            } else {
-                if (empty_count > 0) {
-                    fen_row += std::to_string(empty_count);
-                    empty_count = 0;
-                }
-                fen_row += cell_str;
+            if (*cell_str == '0') {
+                empty++;
+            } 
+            else if (empty) {
+                fen += std::to_string(empty);
+                empty = 0;
+                currCol--;
+            }
+            else {
+                fen += *cell_str;
             }
         }
-        if (empty_count > 0) {
-            fen_row += std::to_string(empty_count);
+
+        if (empty) {
+            fen += std::to_string(empty);
+            empty = 0;
         }
-        fen_rows.push_back(fen_row);
+
+        if (currRow != 8) {
+            fen += "/";
+        }
     }
 
-    std::string fen_position = "";
-    for (size_t i = 0; i < fen_rows.size(); ++i) {
-        fen_position += fen_rows[i] + "/";
-    }
-    fen_position = fen_position.substr(0, fen_position.size() - 1);
+    return PyUnicode_FromString(fen.c_str());
 
-    return PyUnicode_FromString((fen_position + pos_part_str).c_str());
+
+    // std::vector<std::string> pos_part;
+    // std::string position(pos);
+    // std::stringstream ss(position);
+    // std::string temp;
+    // while (ss >> temp) {
+    //     pos_part.push_back(temp);
+    // }
+    // if (move) {
+    //     pos_part[1] = (pos_part[1] == "w") ? "b" : "w";
+    //     pos_part[2] = castle_rights;
+    //     pos_part[3] = en_passant;
+    //     pos_part[4] = (pawn_move) ? "0" : std::to_string(std::stoi(pos_part[4]) + 1);
+    //     pos_part[5] = (pos_part[1] == "w") ? pos_part[5] : std::to_string(std::stoi(pos_part[5]) + 1);
+    // }
+    // std::string pos_part_str = " ";
+    // for (size_t i = 1; i < pos_part.size(); ++i) {
+    //     pos_part_str += pos_part[i] + " ";
+    // }
+    // pos_part_str = pos_part_str.substr(0, pos_part_str.size() - 1);
+
+    // std::vector<std::string> fen_rows;
+    // Py_ssize_t num_rows = PyList_Size(board);
+    // for (Py_ssize_t i = 0; i < num_rows; ++i) {
+    //     PyObject *row = PyList_GetItem(board, i);
+    //     std::string fen_row = "";
+    //     int empty_count = 0;
+        
+    //     Py_ssize_t num_cols = PyList_Size(row);
+    //     for (Py_ssize_t j = 0; j < num_cols; ++j) {
+    //         PyObject *cell = PyList_GetItem(row, j);
+    //         const char *cell_str = PyUnicode_AsUTF8(cell);
+    //         if (strcmp(cell_str, "0") == 0) {
+    //             empty_count++;
+    //         } else {
+    //             if (empty_count > 0) {
+    //                 fen_row += std::to_string(empty_count);
+    //                 empty_count = 0;
+    //             }
+    //             fen_row += cell_str;
+    //         }
+    //     }
+    //     if (empty_count > 0) {
+    //         fen_row += std::to_string(empty_count);
+    //     }
+    //     fen_rows.push_back(fen_row);
+    // }
+
+    // std::string fen_position = "";
+    // for (size_t i = 0; i < fen_rows.size(); ++i) {
+    //     fen_position += fen_rows[i] + "/";
+    // }
+    // fen_position = fen_position.substr(0, fen_position.size() - 1);
+
+    // return PyUnicode_FromString((fen_position + pos_part_str).c_str());
 }
 
 static PyObject *
