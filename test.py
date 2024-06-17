@@ -74,15 +74,15 @@ setupCode = '''import chessPY
 import chess
 pos = 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w KQkq - 0 1' '''
 codeSnippetChess = '''b = chess.FEN_to_board(pos)'''
-codeSnippetChessPY = '''b = chess.FEN_to_board_test(pos)'''
+codeSnippetChessPY = '''b = chessPY.FEN_to_board(pos)'''
 
 a = timeit.repeat(setup= setupCode,
-              stmt= codeSnippetChess, 
+              stmt= codeSnippetChess,
               repeat=3, number=1000000)
 print('cpp: ', sum(a)/len(a))
 
 a = timeit.repeat(setup= setupCode,
-              stmt= codeSnippetChessPY, 
+              stmt= codeSnippetChessPY,
               repeat=3, number=1000000)
 print('py: ', sum(a)/len(a))
 
