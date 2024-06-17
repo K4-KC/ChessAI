@@ -1,6 +1,8 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+import copy
+
 import tensorflow as tf
 import numpy as np
 
@@ -71,26 +73,40 @@ moves = chessPY.get_moves(init_pos, board)
 pos = init_pos
 print(pos)
 
-move_list = [pos]
+move_list, draw_move_list = [pos], [pos]
 selected = False
 
 window_size = (original_width, original_height)
 running = True
 
 model = tf.keras.models.Sequential([
-  tf.keras.layers.Dense(768, activation='relu'),
-  tf.keras.layers.Dense(1)
+  tf.keras.layers.Dense(768),
+  tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
 while running:
     
     color = True if pos.split(' ')[1] else False
+    
     # get moves
     moves = chessPY.get_moves(pos, board)
     if moves == [[[] for i in range(8)] for j in range(8)]:
+        print(move_list)
         print('White won' if pos.split(' ')[1] == 'b' else 'Black won')
+        running = False
+        break
+    if pos.split(' ')[4] == '50':
+        print(move_list)
+        print('Draw by 50 move rule')
+        running = False
+        break
+    if [i.split(' ')[0] for i in move_list].count(pos.split(' ')[0]) == 3:
+        print(move_list)
+        print('Draw by repetition')
+        running = False
         break
     
+    # predict
     predictions = [[np.zeros([0,]) for i in range(8)] for j in range(8)]
     max_prediction, max_prediction_square, max_prediction_square_move = 0, (0, 0), (0, 0)
     for row in range(8):
@@ -98,23 +114,29 @@ while running:
             if moves[row][move_set] != []:
 
                 piece_moves = [chessPY.make_move(
-                    pos[:], (move_set, row), move, board[:]) for move in moves[row][move_set]]
-                print(pos)
+                    pos, (move_set, row), move, copy.deepcopy(board)) for move in moves[row][move_set]]
                 
                 move_input = np.array([chessPY.board_to_neural(
                     future_board, True if future_pos.split(' ')[1] == 'b' else False) 
                                        for future_pos, future_board in piece_moves])
                 prediction = model.predict(move_input)
-                # print(prediction)
-                if max(prediction) > max_prediction:
+
+                if max(prediction) >= max_prediction:
                     max_prediction = max(prediction)
                     max_prediction_square = (move_set, row)
                     max_prediction_square_move = moves[row][move_set][np.argmax(prediction)]
                 predictions[row][move_set] = prediction
     
-    print(pos, max_prediction_square, max_prediction_square_move)
+    # make the best move
+    if board[max_prediction_square_move[1]][
+        max_prediction_square_move[0]] == 'P' or board[max_prediction_square_move[1]][max_prediction_square_move[0]] == 'p':
+        draw_move_list = []
     pos, board = chessPY.make_move(pos[:], max_prediction_square, max_prediction_square_move, board[:])
-    print(pos)
+    print(pos, max_prediction_square, max_prediction_square_move)
+    move_list.append(pos)
+    draw_move_list.append(pos)
+    # running = False
+
     # print(max_prediction_square, max_prediction_square_move)
     # print(move_input[6][7].shape)
             

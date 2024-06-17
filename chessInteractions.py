@@ -1,8 +1,8 @@
-from chess import system
+# from chess import system
 import pygame
 import chessPY
 
-system("echo ChessAI")
+# system("echo 5.0")
 
 import sys
 
@@ -53,10 +53,13 @@ pieces = transform_scale(original_pieces, original_width, original_height)
 screen = pygame.display.set_mode((original_width, original_height), pygame.RESIZABLE)
 capture_screen = pygame.Surface((original_width/8, original_height/8), pygame.SRCALPHA)
 move_screen = pygame.Surface((original_width/8, original_height/8), pygame.SRCALPHA)
+off_track_screen = pygame.Surface((original_width, original_height), pygame.SRCALPHA)
 pygame.draw.circle(capture_screen,(100, 100, 100, 100), 
                    ((original_width/16), (original_height/16)), original_height//16, original_height//90)
 pygame.draw.circle(move_screen,(100, 100, 100, 100), 
                    ((original_width/16), (original_height/16)), original_height//50)
+
+off_track_screen.fill((255, 255, 255, 100))
 
 pygame.display.set_caption("ChessAI")
 
@@ -119,7 +122,14 @@ def flip_moves(moves):
     moves = flip_board(moves)
     return [[[(7 - move[0], 7 - move[1]) for move in piece] for piece in row] for row in moves]
 
-init_pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+pre_move_list = [
+    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'rnbqkbnr/pppppppp/8/8/8/1P6/P1PPPPPP/RNBQKBNR b KQkq - 0 1', 'rnbqkbnr/pppp1ppp/8/4p3/8/1P6/P1PPPPPP/RNBQKBNR w KQkq - 0 2', 'rnbqkbnr/pppp1ppp/8/4p3/8/1P6/PBPPPPPP/RN1QKBNR b KQkq - 1b KQkq - 1 2', 'rnbqkb1r/ppppnppp/8/4p3/8/1P6/PBPPPPPP/RN1QKBNR w KQkq - 2 3', 'rnbqkb1r/ppppnppp/8/4p3/8/1P3N2/PBPPPPPP/RN1QKB1R b KQkq - 3 3', 'r1bqkb1r/ppppnppp/2n5/4p3/8/1P3N2/PBPPPPPP/RN1QKB1R w KQkq - 4 4', 'r1bqkb1r/ppppnppp/2n5/4p3/3P4/1P3N2/PBP1PPPP/RN1QKB1R b KQkq - 0 4', 'r1bqkb1r/1pppnppp/p1n5/4p3/3P4/1P3N2/PBP1PPPP/RN1QKB1R w KQkq - 0 5', 'r1bqkb1r/1pppnppp/p1n5/4P3/8/1P3N2/PBP1PPPP/RN1QKB1R b KQkq - 0 5', 'r1bqkb1r/1pppnppp/p7/4P3/1n6/1P3N2/PBP1PPPP/RN1QKB1R w KQkq - 1 6', 'r1bqkb1r/1pppnppp/p7/4P3/1n6/1P3N2/PBPKPPPP/RN1Q1B1R b kq - 2 6', 'r1bqkb1r/1p1pnppp/p1p5/4P3/1n6/1P3N2/PBPKPPPP/RN1Q1B1R w kq - 0 7', 'r1bqkb1r/1p1pnppp/p1p5/4P3/1n5N/1P6/PBPKPPPP/RN1Q1B1R b kq - 1 7', 'r1bqkb1r/1p1p1ppp/p1p5/4Pn2/1n5N/1P6/PBPKPPPP/RN1Q1B1R w kq - 2 8', 'r1bqkb1r/1p1p1ppp/p1p5/4PN2/1n6/1P6/PBPKPPPP/RN1Q1B1R b kq - 3 8', 'r1bqk2r/1p1p1ppp/p1p5/2b1PN2/1n6/1P6/PBPKPPPP/RN1Q1B1R w kq - 4 9', 'r1bqk2r/1p1p1ppp/p1p5/2b1PN2/Pn6/1P6/1BPKPPPP/RN1Q1B1R b kq - 0 9', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn5q/1P6/1BPKPPPP/RN1Q1B1R w kq - 1 10', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn5q/1P6/RBPKPPPP/1N1Q1B1R b kq - 2 10', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn2q3/1P6/RBPKPPPP/1N1Q1B1R w kq - 3 11', 'r1b1k2r/1p1p1ppp/p1p5/P1b1PN2/1n2q3/1P6/RBPKPPPP/1N1Q1B1R b kq - 0 11', 'r1b1k2r/3p1ppp/p1p5/Ppb1PN2/1n2q3/1P6/RBPKPPPP/1N1Q1B1R w kq b6 0 12', 'r1b1k2r/3p1ppp/p1p5/Ppb1PN2/1n2q3/1PN5/RBPKPPPP/3Q1B1R b kq - 1 12', 'r1b1k2r/3p1ppp/p1p5/Ppb1qN2/1n6/1PN5/RBPKPPPP/3Q1B1R w kq - 2 13', 'r1b1k2r/3p1ppp/p1p5/Ppb1qN2/1n2N3/1P6/RBPKPPPP/3Q1B1R b kq - 3 13', 'r1b1k2r/3p1ppp/p1pq4/Ppb2N2/1n2N3/1P6/RBPKPPPP/3Q1B1R w kq - 4 14', 'r1b1k2r/3p1ppp/p1pq4/Ppb2N2/1n2N3/1PK5/RBP1PPPP/3Q1B1R b kq - 5 14', 'r1b1k2r/3p1ppp/p1p5/Ppb2N2/1n2N3/1PK5/RBP1PPPP/3q1B1R w kq - 6 15', 'r1b1k2r/3p1ppp/p1p5/Ppb2N2/Rn2N3/1PK5/1BP1PPPP/3q1B1R b kq - 7 15', 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w kq - 8 16']
+if pre_move_list:
+    init_pos = pre_move_list[0]
+else:
+    init_pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+
+# init_pos = '1n2kbn1/rp2ppp1/1q5r/p6p/2p2PP1/1P2P2P/PR2K1B1/1b2q1NR w KQkq - 0 1'
 # init_pos = 'R7/8/8/4R3/8/8/8/8 w KQkq - 0 1'
 
 board_flip = False
@@ -134,17 +144,23 @@ board = FEN_to_board(init_pos)
 #          ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
 
 moves = chessPY.get_moves(init_pos, board)
+
+if board_flip:
+    flipped_board = flip_board(board)
+    flipped_moves = flip_moves(moves)
+
 pos = init_pos
 print(pos)
 
-move_list = [pos]
+move_list, draw_move_list = [pos], [pos]
 selected = False
 
 window_size = (original_width, original_height)
-running = True
+running, off_track = True, False
 while running:
 
     for event in pygame.event.get():
+        
         if event.type == pygame.QUIT:
             running = False
         
@@ -156,15 +172,38 @@ while running:
 
                 if selected:
                     if new_selected in moves[selected[1]][selected[0]]:
+                        if board[selected[1]][selected[0]] == 'P' or board[selected[1]][selected[0]] == 'p':
+                            draw_move_list = []
                         pos, board = chessPY.make_move(pos, selected, new_selected, board)
+                        if pre_move_list:
+                            if len(move_list) < len(pre_move_list):
+                                if pos != pre_move_list[len(move_list)]: off_track = True
+                            else: off_track = True
                         print(pos)
                         
                         move_list.append(pos)
+                        draw_move_list.append(pos)
                         moves = chessPY.get_moves(pos, board)
                         if board_flip and pos.split(' ')[1] == 'b':
                             flipped_board = flip_board(board)
                             flipped_moves = flip_moves(moves)
                         selected = False
+                        
+                        if moves == [[[] for i in range(8)] for j in range(8)]:
+                            print('White won' if pos.split(' ')[1] == 'b' else 'Black won')
+                            if not pre_move_list:
+                                running = False
+                                break
+                        if pos.split(' ')[4] == '50':
+                            print('Draw by 50 move rule')
+                            if not pre_move_list:
+                                running = False
+                                break
+                        if [i.split(' ')[0] for i in draw_move_list].count(pos.split(' ')[0]) >= 3:
+                            print('Draw by repetition')
+                            if not pre_move_list:
+                                running = False
+                                break
 
                     elif board[new_selected[1]][new_selected[0]] == '0': selected = False
                     else: selected = new_selected
@@ -173,9 +212,11 @@ while running:
                     else: selected = new_selected
         
         if event.type == pygame.KEYDOWN:
+            
             if event.key == pygame.K_LEFT:
                 if len(move_list) > 1:
                     move_list.pop()
+                    if draw_move_list != []: draw_move_list.pop()
                     pos = move_list[-1]
                     board = FEN_to_board(pos)
                     moves = chessPY.get_moves(pos, board)
@@ -184,6 +225,34 @@ while running:
                         flipped_moves = flip_moves(moves)
                     print(pos)
                     selected = False
+                    if pre_move_list and len(move_list) <= len(pre_move_list):
+                        if pos == pre_move_list[len(move_list)-1]: off_track = False
+                    
+            elif event.key == pygame.K_RIGHT:
+                if not off_track and len(move_list) < len(pre_move_list):
+                    pos = pre_move_list[len(move_list)]
+                    board = FEN_to_board(pos)
+                    moves = chessPY.get_moves(pos, board)
+                    if board_flip and pos.split(' ')[1] == 'b':
+                        flipped_board = flip_board(board)
+                        flipped_moves = flip_moves(moves)
+                    print(pos)
+                    move_list.append(pos)
+                    draw_move_list.append(pos)
+                    selected = False
+                    
+                    # if moves == [[[] for i in range(8)] for j in range(8)]:
+                    #     print('White won' if pos.split(' ')[1] == 'b' else 'Black won')
+                    #     running = False
+                    #     break
+                    # if pos.split(' ')[4] == '50':
+                    #     print('Draw by 50 move rule')
+                    #     running = False
+                    #     break
+                    # if [i.split(' ')[0] for i in draw_move_list].count(pos.split(' ')[0]) >= 3:
+                    #     print('Draw by repetition')
+                    #     running = False
+                    #     break
 
         elif event.type == pygame.VIDEORESIZE:
             window_size = maintain_aspect_ratio(event.size)
@@ -193,6 +262,7 @@ while running:
             
             capture_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
             move_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
+            off_track_screen = pygame.Surface((window_size[0], window_size[1]), pygame.SRCALPHA)
             pygame.draw.circle(capture_screen,(100, 100, 100, 100), 
                             ((window_size[0]/16), (window_size[1]/16)), 
                             window_size[1]//16, window_size[1]//90)
@@ -235,6 +305,8 @@ while running:
                     screen.blit(move_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
                 else:
                     screen.blit(capture_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
+    
+    if off_track: screen.blit(off_track_screen, (0, 0))
     
     pygame.display.flip()
 

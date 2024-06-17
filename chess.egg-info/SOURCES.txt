@@ -1,3 +1,4 @@
+chess.cpp
 setup.py
 tst.cpp
 chess.egg-info/PKG-INFO

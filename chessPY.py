@@ -18,13 +18,14 @@ def FEN_to_board(pos):
     return board
 
 def board_to_FEN(board, pos='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 
-                 move=False, castle_rights='KQkq', en_passant='-'):
+                 move=False, pawn_move=True, castle_rights='KQkq', en_passant='-'):
 
     pos_part = [pos.split(' ')[i] for i in range(1, 6)]
     if move:
         pos_part[0] = 'w' if pos_part[0] == 'b' else 'b'
         pos_part[1] = castle_rights
         pos_part[2] = en_passant
+        pos_part[3] = '0' if pawn_move else str(int(pos_part[3]) + 1)
         pos_part[4] = str(int(pos_part[4]) + 1) if pos_part[0] == 'w' else pos_part[4]
     pos_part = " ".join(pos_part)
 
@@ -293,7 +294,7 @@ def get_moves(pos, board):
                         check = [None]
                         break
                     if diag_bott_left_pin:
-                        diag_bott_left_pin.append((x+i, y-i))
+                        diag_bott_left_squares.append((x+i, y-i))
                         pin.append((diag_bott_left_pin, [square for square in diag_bott_left_squares]))
                     else:
                         for square in diag_bott_left_squares: check.append(square)
@@ -818,7 +819,7 @@ def get_pawn_moves(en_passant, board, color, x, y):
     if color:
         if y > 0:
             moves.append((x, y-1)) if board[y-1][x] == '0' else None
-            if y == 6:
+            if y == 6 and board[y-1][x] == '0':
                 moves.append((x, y-2)) if board[y-2][x] == '0' else None
             # en passant
             elif en_passant != '-':
@@ -833,7 +834,7 @@ def get_pawn_moves(en_passant, board, color, x, y):
     else:
         if y < 7:
             moves.append((x, y+1)) if board[y+1][x] == '0' else None
-            if y == 1:
+            if y == 1 and board[y+1][x] == '0':
                 moves.append((x, y+2)) if board[y+2][x] == '0' else None
             # en passant
             elif en_passant != '-':
@@ -963,7 +964,11 @@ def get_king_moves(castle_rights, board, territory, color, x, y):
     return moves
 
 def make_move(pos, selected, new_selected, board):
-
+    
+    if board[selected[1]][selected[0]] == 'P' or board[selected[1]][selected[0]] == 'p':
+        pawn_move = True
+    else: pawn_move = False
+    
     castle_rights = pos.split(' ')[2]
     en_passant = '-'
     if board[new_selected[1]][new_selected[0]] == '0':
@@ -1046,7 +1051,7 @@ def make_move(pos, selected, new_selected, board):
         if board[new_selected[1]][new_selected[0]] == 'p':
             board[new_selected[1]][new_selected[0]] = 'q'
     
-    pos = board_to_FEN(board, pos, True, castle_rights, en_passant)
+    pos = board_to_FEN(board, pos, True, pawn_move, castle_rights, en_passant)
     return (pos, board)
 
 def board_to_neural(board, color):
