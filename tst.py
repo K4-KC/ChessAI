@@ -86,7 +86,7 @@ model = tf.keras.models.Sequential([
 
 while running:
     
-    color = True if pos.split(' ')[1] else False
+    color = True if pos.split(' ')[1] == 'w' else False
     
     # get moves
     moves = chessPY.get_moves(pos, board)

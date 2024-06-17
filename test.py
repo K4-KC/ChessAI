@@ -85,8 +85,8 @@ a = timeit.repeat(setup= setupCode,
               stmt= codeSnippetChessPY, 
               repeat=3, number=1000000)
 print('py: ', sum(a)/len(a))
-
-# print(chess.FEN_to_board_test(pos))
+b = chess.FEN_to_board(pos)
+print(chess.board_to_FEN(b))
 
 # t1 = time.time()
 # for i in range(1000000):
