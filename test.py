@@ -57,11 +57,59 @@
 # os.system('echo sdf')
 
 import chess
+import chessPY
+import time, timeit
 
-a = chess.FEN_to_board('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
-print(a)
+# a = chess.FEN_to_board('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+# print(a)
 
-b = chess.board_to_FEN(a)
-print(b)
+# b = chess.board_to_FEN(a)
+# print(b)
 
-print(chess.get_color('P'))
+# print(chess.get_color('P'))
+
+pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+
+setupCode = '''import chessPY
+import chess
+pos = 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w KQkq - 0 1' '''
+codeSnippetChess = '''b = chess.FEN_to_board(pos)'''
+codeSnippetChessPY = '''b = chess.FEN_to_board_test(pos)'''
+
+a = timeit.repeat(setup= setupCode,
+              stmt= codeSnippetChess, 
+              repeat=3, number=1000000)
+print('cpp: ', sum(a)/len(a))
+
+a = timeit.repeat(setup= setupCode,
+              stmt= codeSnippetChessPY, 
+              repeat=3, number=1000000)
+print('py: ', sum(a)/len(a))
+
+# print(chess.FEN_to_board_test(pos))
+
+# t1 = time.time()
+# for i in range(1000000):
+#     a = chessPY.FEN_to_board(pos)
+
+# t2 = time.time()
+# print(t2-t1)
+
+# tt1 = time.time()
+# for i in range(1):
+#     b = chessPY.board_to_FEN(a)
+# tt2 = time.time()
+# # print(tt2-tt1)
+
+# t3 = time.time()
+# for i in range(1000000):
+#     a = chess.FEN_to_board(pos)
+
+# t4 = time.time()
+# print(t4-t3)
+
+# tt3 = time.time()
+# for i in range(1):
+#     b = chess.board_to_FEN(a)
+# tt4 = time.time()
+# # print(tt4-tt3)

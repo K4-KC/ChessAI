@@ -3,9 +3,42 @@
 #include <string>
 #include <sstream>
 
-using namespace std;
-
 static PyObject *ChessError;
+
+static PyObject *
+FEN_to_board_test(PyObject *self, PyObject *args) {
+    const char *pos;
+    if (!PyArg_ParseTuple(args, "s", &pos)) {
+        return NULL;
+    }
+
+    PyObject *board = PyList_New(8);
+    short currCol = 0;
+
+    PyObject* board_row = PyList_New(8);
+    short lastInRow = 0;
+
+    while(true) {
+        if(*pos & 0x40) {
+            PyList_SetItem(board_row, lastInRow++, PyUnicode_FromStringAndSize(pos, 1));
+        } 
+        else if (*pos & 0x20 && *pos & 0x10) {
+            for (short j = 0; j < *pos - '0'; j++) {
+                PyList_SetItem(board_row, lastInRow++, PyUnicode_FromString("0"));
+            }
+        }
+        else {
+            PyList_SetItem(board, currCol++, board_row);
+            lastInRow = 0;
+            board_row = PyList_New(8);
+            if(!(*pos & 0xF)) break;
+        }
+
+        pos++;
+    }
+
+    return board;
+}
 
 static PyObject *
 FEN_to_board(PyObject *self, PyObject *args) {
@@ -13,41 +46,30 @@ FEN_to_board(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "s", &pos)) {
         return NULL;
     }
-    
-    string position(pos);
-    string board_part = position.substr(0, position.find(' '));
-    vector<string> rows;
-    size_t start = 0;
-    size_t end = board_part.find('/');
-    
-    while (end != string::npos) {
-        rows.push_back(board_part.substr(start, end - start));
-        start = end + 1;
-        end = board_part.find('/', start);
-    }
-    rows.push_back(board_part.substr(start));
 
-    PyObject *board = PyList_New(rows.size());
-    
-    for (size_t i = 0; i < rows.size(); ++i) {
-        const string &row = rows[i];
-        vector<PyObject*> board_row;
-        
-        for (char c : row) {
-            if (isdigit(c)) {
-                for (int j = 0; j < c - '0'; ++j) {
-                    board_row.push_back(PyUnicode_FromString("0"));
-                }
-            } else {
-                board_row.push_back(PyUnicode_FromStringAndSize(&c, 1));
+    PyObject *board = PyList_New(8);
+    short currCol = 0;
+
+    PyObject* board_row = PyList_New(8);
+    short lastInRow = 0;
+
+    while(1) {
+        if (*pos >= '1' && *pos <= '8') {
+            for (short j = 0; j < *pos - '0'; j++) {
+                PyList_SetItem(board_row, lastInRow++, PyUnicode_FromString("0"));
             }
         }
-
-        PyObject *py_board_row = PyList_New(board_row.size());
-        for (size_t j = 0; j < board_row.size(); ++j) {
-            PyList_SetItem(py_board_row, j, board_row[j]);
+        else if (*pos == '/' || *pos == ' ') {
+            PyList_SetItem(board, currCol++, board_row);
+            lastInRow = 0;
+            board_row = PyList_New(8);
+            if(*pos == ' ') break;
+        } 
+        else {
+            PyList_SetItem(board_row, lastInRow++, PyUnicode_FromStringAndSize(pos, 1));
         }
-        PyList_SetItem(board, i, py_board_row);
+
+        pos++;
     }
 
     return board;
@@ -66,10 +88,10 @@ board_to_FEN(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    vector<string> pos_part;
-    string position(pos);
-    stringstream ss(position);
-    string temp;
+    std::vector<std::string> pos_part;
+    std::string position(pos);
+    std::stringstream ss(position);
+    std::string temp;
     while (ss >> temp) {
         pos_part.push_back(temp);
     }
@@ -77,20 +99,20 @@ board_to_FEN(PyObject *self, PyObject *args) {
         pos_part[1] = (pos_part[1] == "w") ? "b" : "w";
         pos_part[2] = castle_rights;
         pos_part[3] = en_passant;
-        pos_part[4] = (pawn_move) ? "0" : to_string(stoi(pos_part[4]) + 1);
-        pos_part[5] = (pos_part[1] == "w") ? pos_part[5] : to_string(stoi(pos_part[5]) + 1);
+        pos_part[4] = (pawn_move) ? "0" : std::to_string(std::stoi(pos_part[4]) + 1);
+        pos_part[5] = (pos_part[1] == "w") ? pos_part[5] : std::to_string(std::stoi(pos_part[5]) + 1);
     }
-    string pos_part_str = " ";
+    std::string pos_part_str = " ";
     for (size_t i = 1; i < pos_part.size(); ++i) {
         pos_part_str += pos_part[i] + " ";
     }
     pos_part_str = pos_part_str.substr(0, pos_part_str.size() - 1);
 
-    vector<string> fen_rows;
+    std::vector<std::string> fen_rows;
     Py_ssize_t num_rows = PyList_Size(board);
     for (Py_ssize_t i = 0; i < num_rows; ++i) {
         PyObject *row = PyList_GetItem(board, i);
-        string fen_row = "";
+        std::string fen_row = "";
         int empty_count = 0;
         
         Py_ssize_t num_cols = PyList_Size(row);
@@ -101,19 +123,19 @@ board_to_FEN(PyObject *self, PyObject *args) {
                 empty_count++;
             } else {
                 if (empty_count > 0) {
-                    fen_row += to_string(empty_count);
+                    fen_row += std::to_string(empty_count);
                     empty_count = 0;
                 }
                 fen_row += cell_str;
             }
         }
         if (empty_count > 0) {
-            fen_row += to_string(empty_count);
+            fen_row += std::to_string(empty_count);
         }
         fen_rows.push_back(fen_row);
     }
 
-    string fen_position = "";
+    std::string fen_position = "";
     for (size_t i = 0; i < fen_rows.size(); ++i) {
         fen_position += fen_rows[i] + "/";
     }
@@ -142,6 +164,8 @@ get_color(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef ChessMethods[] = {
+    {"FEN_to_board_test", FEN_to_board_test, METH_VARARGS,
+    "Convert FEN string to board array"},
     {"FEN_to_board", FEN_to_board, METH_VARARGS, 
     "Convert FEN string to board array"},
     {"board_to_FEN", board_to_FEN, METH_VARARGS, 
