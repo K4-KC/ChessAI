@@ -1,6 +1,9 @@
-# from chess import system
+import chess
 import pygame
 import chessPY
+from pathlib import Path
+import pickle
+import math
 
 # system("echo 5.0")
 
@@ -73,61 +76,28 @@ def maintain_aspect_ratio(event_size):
         new_height = 8 * (int(new_width / aspect_ratio)//8)
     return new_width, new_height
 
-def FEN_to_board(pos):
-    board_part = pos.split(' ')[0]
-    rows = board_part.split('/')
-    
-    board = []
-    
-    for row in rows:
-        board_row = []
-        for char in row:
-            if char.isdigit():
-                board_row.extend(['0'] * int(char))
-            else:
-                board_row.append(char)
-        board.append(board_row)
-    
-    return board
-
-def board_to_FEN(board):
-    fen_rows = []
-    
-    for row in board:
-        fen_row = ""
-        empty_count = 0
-        
-        for cell in row:
-            if cell == '0':
-                empty_count += 1
-            else:
-                if empty_count > 0:
-                    fen_row += str(empty_count)
-                    empty_count = 0
-                fen_row += cell
-
-        if empty_count > 0:
-            fen_row += str(empty_count)
-        
-        fen_rows.append(fen_row)
-    
-    fen_position = "/".join(fen_rows)
-    
-    return fen_position + " w KQkq - 0 1"
-
 def flip_board(board):
-    return [row[::-1] for row in board[::-1]]
+    return [row for row in board]
 
 def flip_moves(moves):
     moves = flip_board(moves)
     return [[[(7 - move[0], 7 - move[1]) for move in piece] for piece in row] for row in moves]
 
-pre_move_list = []
-    # 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1', 'rnbqkbnr/p1pppppp/8/1p6/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 2', 'rnbqkbnr/p1pppppp/8/1p6/8/P7/RPPPPPPP/1NBQKBNR b Kkq - 1 2', 'rnbqkb1r/p1pppppp/5n2/1p6/8/P7/RPPPPPPP/1NBQKBNR w Kkq - 2 3', 'rnbqkb1r/p1pppppp/5n2/1p6/7P/P7/RPPPPPP1/1NBQKBNR b Kkq - 0 3', 'rnbqkb1r/2pppppp/p4n2/1p6/7P/P7/RPPPPPP1/1NBQKBNR w Kkq - 0 4', 'rnbqkb1r/2pppppp/p4n2/1p6/7P/P3P3/RPPP1PP1/1NBQKBNR b Kkq - 0 4', 'rnbqkb1r/2pppppp/p7/1p6/4n2P/P3P3/RPPP1PP1/1NBQKBNR w Kkq - 1 5', 'rnbqkb1r/2pppppp/p7/1p5P/4n3/P3P3/RPPP1PP1/1NBQKBNR b Kkq - 0 5', 'rnbqkb1r/2p1pppp/p2p4/1p5P/4n3/P3P3/RPPP1PP1/1NBQKBNR w Kkq - 0 6', 'rnbqkb1r/2p1pppp/p2p4/1p5P/4n3/P3P2N/RPPP1PP1/1NBQKB1R b Kkq - 1 6', 'rn1qkb1r/2p1pppp/p2p4/1p5P/4n3/P3P2b/RPPP1PP1/1NBQKB1R w Kkq - 2 7', 'rn1qkb1r/2p1pppp/p2p4/1p5P/4n3/P3P2b/RPPP1PP1/1NBQKBR1 b kq - 3 7', 'r2qkb1r/2pnpppp/p2p4/1p5P/4n3/P3P2b/RPPP1PP1/1NBQKBR1 w kq - 4 8', 'r2qkb1r/2pnpppp/p2p4/1p5P/4nP2/P3P2b/RPPP2P1/1NBQKBR1 b kq - 0 8', 'r2qkb1r/2pnp1pp/p2p1p2/1p5P/4nP2/P3P2b/RPPP2P1/1NBQKBR1 w kq - 0 9', 'r2qkb1r/2pnp1pp/p2p1p2/1p5P/4nP2/P3P2b/RPPPK1P1/1NBQ1BR1 b kq - 1 9', 'r1q1kb1r/2pnp1pp/p2p1p2/1p5P/4nP2/P3P2b/RPPPK1P1/1NBQ1BR1 w kq - 2 10', 'r1q1kb1r/2pnp1pp/p2p1p2/1p5P/P3nP2/4P2b/RPPPK1P1/1NBQ1BR1 b kq - 0 10', 'r3kb1r/1qpnp1pp/p2p1p2/1p5P/P3nP2/4P2b/RPPPK1P1/1NBQ1BR1 w kq - 1 11', 'r3kb1r/1qpnp1pp/p2p1p2/1P5P/4nP2/4P2b/RPPPK1P1/1NBQ1BR1 b kq - 0 11', '2kr1b1r/1qpnp1pp/p2p1p2/1P5P/4nP2/4P2b/RPPPK1P1/1NBQ1BR1 w - - 1 12', '2kr1b1r/1qpnp1pp/p2p1p2/1P5P/4nP2/4P2b/RPPP2P1/1NBQKBR1 b - - 2 12', '2kr1b1r/2pnp1pp/p1qp1p2/1P5P/4nP2/4P2b/RPPP2P1/1NBQKBR1 w - - 3 13', '2kr1b1r/2pnp1pp/p1qp1p2/1P5P/4nP2/4P2b/RPPPK1P1/1NBQ1BR1 b - - 4 13', '2kr1b1r/2pnp1pp/p2p1p2/1P5P/4nP2/2q1P2b/RPPPK1P1/1NBQ1BR1 w - - 5 14', '2kr1b1r/2pnp1pp/p2p1p2/1P5P/4nP2/2q1P2b/RPPP2P1/1NBQKBR1 b - - 6 14', '2kr1b1r/2pnp2p/p2p1p2/1P4pP/4nP2/2q1P2b/RPPP2P1/1NBQKBR1 w - g6 0 15', '2kr1b1r/2pnp2p/p2p1p2/1P4PP/4n3/2q1P2b/RPPP2P1/1NBQKBR1 b - - 0 15', '2kr3r/2pnp1bp/p2p1p2/1P4PP/4n3/2q1P2b/RPPP2P1/1NBQKBR1 w - - 1 16', '2kr3r/2pnp1bp/p2p1P2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 b - - 0 16', '2kr3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 w - - 0 17', '2kr3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 b - - 1 17', '3r3r/1kpn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 w - - 2 18', '3r3r/1kpn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 b - - 3 18', 'k2r3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 w - - 4 19', 'k2r3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 b - - 5 19', 'k5rr/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 w - - 6 20', 'k5rr/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 b - - 7 20', 'k2r3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 w - - 8 21', 'k2r3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 b - - 9 21', 'k5rr/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPPK1P1/1NBQ1BR1 w - - 10 22', 'k5rr/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 b - - 11 22', 'k2r3r/2pn2bp/p2p1p2/1P5P/4n3/2q1P2b/RPPP2P1/1NBQKBR1 w - - 12 23']
+def merge_colors(color1, color2, alpha):
+    return(color2[0] - (color2[0] - color1[0]) * alpha,
+           color2[1] - (color2[1] - color1[1]) * alpha,
+           color2[2] - (color2[2] - color1[2]) * alpha)
+    # return (color1[0] * alpha + color2[0] * (1 - alpha), 
+    #         color1[1] * alpha + color2[1] * (1 - alpha), 
+    #         color1[2] * alpha + color2[2] * (1 - alpha))
 
+pre_move_list = Path("data/move_list/move_list.txt")
+    # 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1', 'rnbqkb1r/pppppppp/5n2/8/8/4P3/PPPP1PPP/RNBQKBNR w KQkq - 1 2', 'rnbqkb1r/pppppppp/5n2/8/8/4P3/PPPPQPPP/RNB1KBNR b KQkq - 2 2', 'rnbqkb1r/pp1ppppp/5n2/2p5/8/4P3/PPPPQPPP/RNB1KBNR w KQkq - 0 3', 'rnbqkb1r/pp1ppppp/5n2/2p5/7P/4P3/PPPPQPP1/RNB1KBNR b KQkq - 0 3', 'rnb1kb1r/ppqppppp/5n2/2p5/7P/4P3/PPPPQPP1/RNB1KBNR w KQkq - 1 4', 'rnb1kb1r/ppqppppp/5n2/2p5/3P3P/4P3/PPP1QPP1/RNB1KBNR b KQkq - 0 4', 'rnb1kb1r/ppq1pppp/5n2/2pp4/3P3P/4P3/PPP1QPP1/RNB1KBNR w KQkq - 0 5', 'rnb1kb1r/ppq1pppp/5n2/2pp4/3P3P/4P3/PPPKQPP1/RNB2BNR b kq - 1 5', 'rn2kb1r/ppq1pppp/5n2/2pp4/3P2bP/4P3/PPPKQPP1/RNB2BNR w kq - 2 6', 'rn2kb1r/ppq1pppp/5n2/2pp4/3P2bP/4P1P1/PPPKQP2/RNB2BNR b kq - 0 6', 'rn2kb1r/ppq1pppp/5n2/2pp4/3P3P/4P1P1/PPPKbP2/RNB2BNR w kq - 1 7', 'rn2kb1r/ppq1pppp/5n2/2pp4/3P3P/2N1P1P1/PPPKbP2/R1B2BNR b kq - 2 7', 'rn2kb1r/ppq1pppp/5n2/3p4/2pP3P/2N1P1P1/PPPKbP2/R1B2BNR w kq - 0 8', 'rn2kb1r/ppq1pppp/5n2/3p4/N1pP3P/4P1P1/PPPKbP2/R1B2BNR b kq - 1 8', 'rn2kb1r/1pq1pppp/5n2/p2p4/N1pP3P/4P1P1/PPPKbP2/R1B2BNR w kq - 0 9', 'rn2kb1r/1pq1pppp/5n2/p2p4/N1pP3P/4P1P1/PPPKbP2/1RB2BNR b kq - 1 9', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1pP3P/4P1P1/PPPKbP2/1RB2BNR w k - 2 10', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1pP3P/1P2P1P1/P1PKbP2/1RB2BNR b k - 0 10', '1n3b1r/1pqkpppp/r4n2/p2p4/N1pP3P/1P2P1P1/P1PKbP2/1RB2BNR w k - 1 11', '1n3b1r/1pqkpppp/r4n2/p2p4/N1pP3P/1PP1P1P1/P2KbP2/1RB2BNR b k - 0 11', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1pP3P/1PP1P1P1/P2KbP2/1RB2BNR w k - 1 12', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/2P1P1P1/P2KbP2/1RB2BNR b k - 0 12', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/2P1P1P1/P2KbP2/1RB2BNR w k - 1 13', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/1RP1P1P1/P2KbP2/2B2BNR b k - 2 13', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/1RP1P1P1/P2KbP2/2B2BNR w k - 3 14', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/1RP1P1P1/PB1KbP2/5BNR b k - 4 14', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/1RP1P1P1/PB1KbP2/5BNR w k - 5 15', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/1RP1P1PR/PB1KbP2/5BN1 b k - 6 15', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/1RP1P1PR/PB1KbP2/5BN1 w k - 7 16', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/PRP1P1PR/1B1KbP2/5BN1 b k - 0 16', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/PRP1P1PR/1B1KbP2/5BN1 w k - 1 17', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/PRP1P1PR/1B1KBP2/6N1 b k - 2 17', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/PRP1P1PR/1B1KBP2/6N1 w k - 3 18', '1n2kb1r/1pq1pppp/r4n2/p2p4/N1PP3P/PRP1PBPR/1B1K1P2/6N1 b k - 4 18', '1n3b1r/1pqkpppp/r4n2/p2p4/N1PP3P/PRP1PBPR/1B1K1P2/6N1 w k - 5 19', '1n3b1r/1pqkpppp/r4n2/p2p3P/N1PP4/PRP1PBPR/1B1K1P2/6N1 b k - 0 19', '1n2kb1r/1pq1pppp/r4n2/p2p3P/N1PP4/PRP1PBPR/1B1K1P2/6N1 w k - 1 20', '1n2kb1r/1Rq1pppp/r4n2/p2p3P/N1PP4/P1P1PBPR/1B1K1P2/6N1 b k - 2 20', '1n3b1r/1Rqkpppp/r4n2/p2p3P/N1PP4/P1P1PBPR/1B1K1P2/6N1 w k - 3 21', '1n3b1r/2qkpppp/r4n2/p2p3P/N1PP4/PRP1PBPR/1B1K1P2/6N1 b k - 4 21', '1n2kb1r/2q1pppp/r4n2/p2p3P/N1PP4/PRP1PBPR/1B1K1P2/6N1 w k - 5 22', '1n2kb1r/2q1pppp/r4n2/p1Pp3P/N2P4/PRP1PBPR/1B1K1P2/6N1 b k - 0 22', '1n3b1r/2qkpppp/r4n2/p1Pp3P/N2P4/PRP1PBPR/1B1K1P2/6N1 w k - 1 23', '1n3b1r/2qkpppp/r1P2n2/p2p3P/N2P4/PRP1PBPR/1B1K1P2/6N1 b k - 0 23', '1n2kb1r/2q1pppp/r1P2n2/p2p3P/N2P4/PRP1PBPR/1B1K1P2/6N1 w k - 1 24', '1n2kb1r/1Rq1pppp/r1P2n2/p2p3P/N2P4/P1P1PBPR/1B1K1P2/6N1 b k - 2 24', '1n2kb1r/1Rq1pp1p/r1P2n2/p2p2pP/N2P4/P1P1PBPR/1B1K1P2/6N1 w k g6 0 25', '1n2kb1r/1Rq1pp1p/r1P2nP1/p2p4/N2P4/P1P1PBPR/1B1K1P2/6N1 b k - 0 25', '1n2kb1r/1Rq1p2p/r1P2np1/p2p4/N2P4/P1P1PBPR/1B1K1P2/6N1 w k - 0 26', '1n2kb1r/2q1p2p/r1P2np1/p2p4/N2P4/PRP1PBPR/1B1K1P2/6N1 b k - 1 26', '1n2kb1r/2q1p2p/r1P2n2/p2p2p1/N2P4/PRP1PBPR/1B1K1P2/6N1 w k - 0 27', '1n2kb1r/2q1p2R/r1P2n2/p2p2p1/N2P4/PRP1PBP1/1B1K1P2/6N1 b k - 1 27', '1n2kb1r/2q4R/r1P2n2/p2pp1p1/N2P4/PRP1PBP1/1B1K1P2/6N1 w k - 0 28', '1n2kb1r/2q5/r1P2n2/p2pp1p1/N2P4/PRP1PBPR/1B1K1P2/6N1 b k - 1 28', '1n2k2r/2q5/r1P2n2/p2pp1p1/N2P4/bRP1PBPR/1B1K1P2/6N1 w k - 2 29', '1n2k2r/2q5/r1P2n2/p2pP1p1/N7/bRP1PBPR/1B1K1P2/6N1 b k - 0 29', '1n2k2r/2q5/r1P2n2/p2pP1p1/N7/1RP1PBPR/1b1K1P2/6N1 w k - 1 30', '1n2k2r/1Rq5/r1P2n2/p2pP1p1/N7/2P1PBPR/1b1K1P2/6N1 b k - 2 30', '1n2k2r/1Rq5/r1P2n2/p2pP1p1/N7/b1P1PBPR/3K1P2/6N1 w k - 3 31', '1n2k2r/2q5/r1P2n2/p2pP1p1/N7/bRP1PBPR/3K1P2/6N1 b k - 4 31', '1n2k2r/q7/r1P2n2/p2pP1p1/N7/bRP1PBPR/3K1P2/6N1 w k - 5 32', '1n2k2r/qR6/r1P2n2/p2pP1p1/N7/b1P1PBPR/3K1P2/6N1 b k - 6 32', '1n2k2r/1R6/r1P2n2/p1qpP1p1/N7/b1P1PBPR/3K1P2/6N1 w k - 7 33', '1n2k2r/8/r1P2n2/p1qpP1p1/N7/bRP1PBPR/3K1P2/6N1 b k - 8 33', '1n2kq1r/8/r1P2n2/p2pP1p1/N7/bRP1PBPR/3K1P2/6N1 w k - 9 34', '1n2kq1r/1R6/r1P2n2/p2pP1p1/N7/b1P1PBPR/3K1P2/6N1 b k - 10 34', '1n2k2r/1R6/r1P2n2/p1qpP1p1/N7/b1P1PBPR/3K1P2/6N1 w k - 11 35', '1n2k2r/8/r1P2n2/p1qpP1p1/N7/bRP1PBPR/3K1P2/6N1 b k - 12 35', '1n2kq1r/8/r1P2n2/p2pP1p1/N7/bRP1PBPR/3K1P2/6N1 w k - 13 36', '1n2kq1r/1R6/r1P2n2/p2pP1p1/N7/b1P1PBPR/3K1P2/6N1 b k - 14 36', '1n2k2r/1R6/r1P2n2/p1qpP1p1/N7/b1P1PBPR/3K1P2/6N1 w k - 15 37']
     # 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'rnbqkbnr/pppppppp/8/8/8/1P6/P1PPPPPP/RNBQKBNR b KQkq - 0 1', 'rnbqkbnr/pppp1ppp/8/4p3/8/1P6/P1PPPPPP/RNBQKBNR w KQkq - 0 2', 'rnbqkbnr/pppp1ppp/8/4p3/8/1P6/PBPPPPPP/RN1QKBNR b KQkq - 1b KQkq - 1 2', 'rnbqkb1r/ppppnppp/8/4p3/8/1P6/PBPPPPPP/RN1QKBNR w KQkq - 2 3', 'rnbqkb1r/ppppnppp/8/4p3/8/1P3N2/PBPPPPPP/RN1QKB1R b KQkq - 3 3', 'r1bqkb1r/ppppnppp/2n5/4p3/8/1P3N2/PBPPPPPP/RN1QKB1R w KQkq - 4 4', 'r1bqkb1r/ppppnppp/2n5/4p3/3P4/1P3N2/PBP1PPPP/RN1QKB1R b KQkq - 0 4', 'r1bqkb1r/1pppnppp/p1n5/4p3/3P4/1P3N2/PBP1PPPP/RN1QKB1R w KQkq - 0 5', 'r1bqkb1r/1pppnppp/p1n5/4P3/8/1P3N2/PBP1PPPP/RN1QKB1R b KQkq - 0 5', 'r1bqkb1r/1pppnppp/p7/4P3/1n6/1P3N2/PBP1PPPP/RN1QKB1R w KQkq - 1 6', 'r1bqkb1r/1pppnppp/p7/4P3/1n6/1P3N2/PBPKPPPP/RN1Q1B1R b kq - 2 6', 'r1bqkb1r/1p1pnppp/p1p5/4P3/1n6/1P3N2/PBPKPPPP/RN1Q1B1R w kq - 0 7', 'r1bqkb1r/1p1pnppp/p1p5/4P3/1n5N/1P6/PBPKPPPP/RN1Q1B1R b kq - 1 7', 'r1bqkb1r/1p1p1ppp/p1p5/4Pn2/1n5N/1P6/PBPKPPPP/RN1Q1B1R w kq - 2 8', 'r1bqkb1r/1p1p1ppp/p1p5/4PN2/1n6/1P6/PBPKPPPP/RN1Q1B1R b kq - 3 8', 'r1bqk2r/1p1p1ppp/p1p5/2b1PN2/1n6/1P6/PBPKPPPP/RN1Q1B1R w kq - 4 9', 'r1bqk2r/1p1p1ppp/p1p5/2b1PN2/Pn6/1P6/1BPKPPPP/RN1Q1B1R b kq - 0 9', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn5q/1P6/1BPKPPPP/RN1Q1B1R w kq - 1 10', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn5q/1P6/RBPKPPPP/1N1Q1B1R b kq - 2 10', 'r1b1k2r/1p1p1ppp/p1p5/2b1PN2/Pn2q3/1P6/RBPKPPPP/1N1Q1B1R w kq - 3 11', 'r1b1k2r/1p1p1ppp/p1p5/P1b1PN2/1n2q3/1P6/RBPKPPPP/1N1Q1B1R b kq - 0 11', 'r1b1k2r/3p1ppp/p1p5/Ppb1PN2/1n2q3/1P6/RBPKPPPP/1N1Q1B1R w kq b6 0 12', 'r1b1k2r/3p1ppp/p1p5/Ppb1PN2/1n2q3/1PN5/RBPKPPPP/3Q1B1R b kq - 1 12', 'r1b1k2r/3p1ppp/p1p5/Ppb1qN2/1n6/1PN5/RBPKPPPP/3Q1B1R w kq - 2 13', 'r1b1k2r/3p1ppp/p1p5/Ppb1qN2/1n2N3/1P6/RBPKPPPP/3Q1B1R b kq - 3 13', 'r1b1k2r/3p1ppp/p1pq4/Ppb2N2/1n2N3/1P6/RBPKPPPP/3Q1B1R w kq - 4 14', 'r1b1k2r/3p1ppp/p1pq4/Ppb2N2/1n2N3/1PK5/RBP1PPPP/3Q1B1R b kq - 5 14', 'r1b1k2r/3p1ppp/p1p5/Ppb2N2/1n2N3/1PK5/RBP1PPPP/3q1B1R w kq - 6 15', 'r1b1k2r/3p1ppp/p1p5/Ppb2N2/Rn2N3/1PK5/1BP1PPPP/3q1B1R b kq - 7 15', 'r1b1k2r/3p1ppp/p1p5/Ppbn1N2/R3N3/1PK5/1BP1PPPP/3q1B1R w kq - 8 16']
 if pre_move_list:
-    init_pos = pre_move_list[0]
+    with pre_move_list.open('rb') as f:
+        pre_move_list = pickle.load(f)
+    init_pos = pre_move_list[0][0]
 else:
     init_pos = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
@@ -135,7 +105,7 @@ else:
 # init_pos = 'R7/8/8/4R3/8/8/8/8 w KQkq - 0 1'
 
 board_flip = False
-board = FEN_to_board(init_pos)
+board = chess.FEN_to_board(init_pos)
 # board = [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
 #          ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
 #          ['0', '0', '0', '0', '0', '0', '0', '0'],
@@ -179,7 +149,7 @@ while running:
                         pos, board = chessPY.make_move(pos, selected, new_selected, board)
                         if pre_move_list:
                             if len(move_list) < len(pre_move_list):
-                                if pos != pre_move_list[len(move_list)]: off_track = True
+                                if pos != pre_move_list[len(move_list)][0]: off_track = True
                             else: off_track = True
                         print(pos)
                         
@@ -220,7 +190,7 @@ while running:
                     move_list.pop()
                     if draw_move_list != []: draw_move_list.pop()
                     pos = move_list[-1]
-                    board = FEN_to_board(pos)
+                    board = chess.FEN_to_board(pos)
                     moves = chessPY.get_moves(pos, board)
                     if board_flip and pos.split(' ')[1] == 'b':
                         flipped_board = flip_board(board)
@@ -228,12 +198,12 @@ while running:
                     print(pos)
                     selected = False
                     if pre_move_list and len(move_list) <= len(pre_move_list):
-                        if pos == pre_move_list[len(move_list)-1]: off_track = False
+                        if pos == pre_move_list[len(move_list)-1][0]: off_track = False
                     
             elif event.key == pygame.K_RIGHT:
                 if not off_track and len(move_list) < len(pre_move_list):
-                    pos = pre_move_list[len(move_list)]
-                    board = FEN_to_board(pos)
+                    pos = pre_move_list[len(move_list)][0]
+                    board = chess.FEN_to_board(pos)
                     moves = chessPY.get_moves(pos, board)
                     if board_flip and pos.split(' ')[1] == 'b':
                         flipped_board = flip_board(board)
@@ -265,6 +235,7 @@ while running:
             capture_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
             move_screen = pygame.Surface((window_size[0]/8, window_size[1]/8), pygame.SRCALPHA)
             off_track_screen = pygame.Surface((window_size[0], window_size[1]), pygame.SRCALPHA)
+            off_track_screen.fill((255, 255, 255, 100))
             pygame.draw.circle(capture_screen,(100, 100, 100, 100), 
                             ((window_size[0]/16), (window_size[1]/16)), 
                             window_size[1]//16, window_size[1]//90)
@@ -288,27 +259,60 @@ while running:
     if selected:
         if board_flip and pos.split(' ')[1] == 'b':
             flipped_selected = (7 - selected[0], 7 - selected[1])
-            pygame.draw.rect(screen, (245, 246, 130) if (selected[0] + selected[1]) % 2 == 0 else (185, 202, 67),
-                                pygame.Rect(flipped_selected[0] * window_size[0]/8, flipped_selected[1] * window_size[1]/8, 
-                                            window_size[0]/8, window_size[1]/8), 
-                                window_size[0]//128)
+            pygame.draw.rect(screen, (245, 246, 130), pygame.Rect(
+                flipped_selected[0] * window_size[0]/8, flipped_selected[1] * window_size[1]/8, 
+                                            window_size[0]/8, window_size[1]/8), window_size[0]//128)
             for move in moves[selected[1]][selected[0]]:
                 if board[move[1]][move[0]] == '0':
                     screen.blit(move_screen, ((7-move[0]) * window_size[0]/8, (7-move[1]) * window_size[1]/8))
                 else:
                     screen.blit(capture_screen, ((7-move[0]) * window_size[0]/8, (7-move[1]) * window_size[1]/8))
         else:
-            pygame.draw.rect(screen, (245, 246, 130) if (selected[0] + selected[1]) % 2 == 0 else (185, 202, 67),
-                                pygame.Rect(selected[0] * window_size[0]/8, selected[1] * window_size[1]/8, 
-                                            window_size[0]/8, window_size[1]/8), 
-                                window_size[0]//128)
+            pygame.draw.rect(screen, (245, 246, 130), pygame.Rect(
+                selected[0] * window_size[0]/8, selected[1] * window_size[1]/8, 
+                                            window_size[0]/8, window_size[1]/8), window_size[0]//128)
+            # pygame.draw.rect(screen, (245, 246, 130) if (selected[0] + selected[1]) % 2 == 0 else (185, 202, 67),
+            #                     pygame.Rect(selected[0] * window_size[0]/8, selected[1] * window_size[1]/8, 
+            #                                 window_size[0]/8, window_size[1]/8), 
+            #                     window_size[0]//128)
             for move in moves[selected[1]][selected[0]]:
                 if board[move[1]][move[0]] == '0':
                     screen.blit(move_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
                 else:
                     screen.blit(capture_screen, (move[0] * window_size[0]/8, move[1] * window_size[1]/8))
+        for i in range(len(pre_move_list[len(move_list)-1][1][selected[1]][selected[0]])):
+            value = pre_move_list[len(move_list)-1][1][selected[1]][selected[0]][i]
+            value = (math.sin((value-1)*math.pi/2)) + 1
+            width = int((window_size[0]*value)/77)
+            for p in range(width):
+                pygame.draw.rect(screen, 
+                    merge_colors((235, 236, 208), (merge_colors((15, 20, 240), 
+                                merge_colors((15, 20, 240), (255, 255, 255), value), 
+                                    (1-p/width)*value)), p/width) if (moves[selected[1]][selected[0]][i][0]+moves[selected[1]][selected[0]][i][1])%2 == 0 else 
+                    merge_colors((118, 150, 86), (merge_colors((15, 20, 240), 
+                                merge_colors((15, 20, 240), (255, 255, 255), value), 
+                                    (1-p/width)*value)), p/width), pygame.Rect(
+                                        moves[selected[1]][selected[0]][i][0] * window_size[0]/8 + p, moves[selected[1]][selected[0]][i][1] * window_size[1]/8 + p, 
+                                        window_size[0]/8 - 2*p, window_size[1]/8 - 2*p), 1)
     
     if off_track: screen.blit(off_track_screen, (0, 0))
+    elif pre_move_list and not selected:
+        for i in range(8):
+            for j in range(8):
+                if pre_move_list[len(move_list)-1][1][j][i] == []: continue
+                value = max(pre_move_list[len(move_list)-1][1][j][i])
+                value = (math.sin((value-1)*math.pi/2)) + 1
+                width = int((window_size[0]*value)/77)
+                for p in range(width):
+                    pygame.draw.rect(screen, 
+                        merge_colors((235, 236, 208), (merge_colors((15, 20, 240), 
+                                    merge_colors((15, 20, 240), (255, 255, 255), value), 
+                                     (1-p/width)*value)), p/width) if (i+j)%2 == 0 else 
+                        merge_colors((118, 150, 86), (merge_colors((15, 20, 240), 
+                                    merge_colors((15, 20, 240), (255, 255, 255), value), 
+                                     (1-p/width)*value)), p/width), pygame.Rect(i * window_size[0]/8 + p, j * window_size[1]/8 + p, 
+                                            window_size[0]/8 - 2*p, window_size[1]/8 - 2*p), 1)
+                
     
     pygame.display.flip()
 

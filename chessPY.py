@@ -1,57 +1,58 @@
 import numpy as np
+import chess
 
-def FEN_to_board(pos):
-    board_part = pos.split(' ')[0]
-    rows = board_part.split('/')
+# def FEN_to_board(pos):
+#     board_part = pos.split(' ')[0]
+#     rows = board_part.split('/')
     
-    board = []
+#     board = []
     
-    for row in rows:
-        board_row = []
-        for char in row:
-            if char.isdigit():
-                board_row.extend(['0'] * int(char))
-            else:
-                board_row.append(char)
-        board.append(board_row)
+#     for row in rows:
+#         board_row = []
+#         for char in row:
+#             if char.isdigit():
+#                 board_row.extend(['0'] * int(char))
+#             else:
+#                 board_row.append(char)
+#         board.append(board_row)
     
-    return board
+#     return board
 
-def board_to_FEN(board, pos='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 
-                 move=False, pawn_move=True, castle_rights='KQkq', en_passant='-'):
+# def board_to_FEN(board, pos='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 
+#                  move=False, pawn_move=True, castle_rights='KQkq', en_passant='-'):
 
-    pos_part = [pos.split(' ')[i] for i in range(1, 6)]
-    if move:
-        pos_part[0] = 'w' if pos_part[0] == 'b' else 'b'
-        pos_part[1] = castle_rights
-        pos_part[2] = en_passant
-        pos_part[3] = '0' if pawn_move else str(int(pos_part[3]) + 1)
-        pos_part[4] = str(int(pos_part[4]) + 1) if pos_part[0] == 'w' else pos_part[4]
-    pos_part = " ".join(pos_part)
+#     pos_part = [pos.split(' ')[i] for i in range(1, 6)]
+#     if move:
+#         pos_part[0] = 'w' if pos_part[0] == 'b' else 'b'
+#         pos_part[1] = castle_rights
+#         pos_part[2] = en_passant
+#         pos_part[3] = '0' if pawn_move else str(int(pos_part[3]) + 1)
+#         pos_part[4] = str(int(pos_part[4]) + 1) if pos_part[0] == 'w' else pos_part[4]
+#     pos_part = " ".join(pos_part)
 
-    fen_rows = []
+#     fen_rows = []
     
-    for row in board:
-        fen_row = ""
-        empty_count = 0
+#     for row in board:
+#         fen_row = ""
+#         empty_count = 0
         
-        for cell in row:
-            if cell == '0':
-                empty_count += 1
-            else:
-                if empty_count > 0:
-                    fen_row += str(empty_count)
-                    empty_count = 0
-                fen_row += cell
+#         for cell in row:
+#             if cell == '0':
+#                 empty_count += 1
+#             else:
+#                 if empty_count > 0:
+#                     fen_row += str(empty_count)
+#                     empty_count = 0
+#                 fen_row += cell
         
-        if empty_count > 0:
-            fen_row += str(empty_count)
+#         if empty_count > 0:
+#             fen_row += str(empty_count)
         
-        fen_rows.append(fen_row)
+#         fen_rows.append(fen_row)
     
-    fen_position = "/".join(fen_rows)
+#     fen_position = "/".join(fen_rows)
     
-    return fen_position + " " + pos_part
+#     return fen_position + " " + pos_part
 
 def get_color(piece):
     if piece.isupper():
@@ -229,6 +230,9 @@ def get_moves(pos, board):
         if territory[y][x]:
         
             if x > 0:
+                if board[y-1][x-1] == 'p':
+                    check.append((x-1, y-1))
+                    check_flag = True
                 if x > 1:
                     if y > 0 and board[y-1][x-2] == 'n':
                         check.append((x-2, y-1))
@@ -243,6 +247,9 @@ def get_moves(pos, board):
                     check.append((x-1, y+2))
                     check_flag = True
             if x < 7:
+                if board[y-1][x+1] == 'p':
+                    check.append((x+1, y-1))
+                    check_flag = True
                 if x < 6:
                     if y > 0 and board[y-1][x+2] == 'n':
                         check.append((x+2, y-1))
@@ -443,8 +450,11 @@ def get_moves(pos, board):
             
     elif not color:
         if territory[y][x]:
-    
+            
             if x > 0:
+                if board[y+1][x-1] == 'P':
+                    check.append((x-1, y+1))
+                    check_flag = True
                 if x > 1:
                     if y > 0 and board[y-1][x-2] == 'N':
                         check.append((x-2, y-1))
@@ -459,6 +469,9 @@ def get_moves(pos, board):
                     check.append((x-1, y+2))
                     check_flag = True
             if x < 7:
+                if board[y+1][x+1] == 'P':
+                    check.append((x+1, y+1))
+                    check_flag = True
                 if x < 6:
                     if y > 0 and board[y-1][x+2] == 'N':
                         check.append((x+2, y-1))
@@ -1051,7 +1064,7 @@ def make_move(pos, selected, new_selected, board):
         if board[new_selected[1]][new_selected[0]] == 'p':
             board[new_selected[1]][new_selected[0]] = 'q'
     
-    pos = board_to_FEN(board, pos, True, pawn_move, castle_rights, en_passant)
+    pos = chess.board_to_FEN(board, pos, True, pawn_move, castle_rights, en_passant)
     return (pos, board)
 
 def board_to_neural(board, color):
